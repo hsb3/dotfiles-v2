@@ -212,7 +212,7 @@ step_shell() {
 
 step_references() {
   local pats f rel line p d body
-  pats="$(mktemp)"
+  pats="$(mktemp "${TMPDIR:-/tmp}/check.XXXXXX")"
   grep -Ev '^[[:space:]]*(#|$)' "$gate/forbidden.txt" >"$pats"
   # R7: forbidden references anywhere outside the list itself and the fixtures
   while IFS= read -r f; do
@@ -253,7 +253,7 @@ step_selftest() {
     violation R10 "$gate/fixtures" "missing base fixture"
     return
   }
-  tmp="$(mktemp -d)"
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/check.XXXXXX")"
   cp -R "$base" "$tmp/base"
   "$gate/check.sh" --root "$tmp/base" structure shell references secrets >/dev/null 2>&1 ||
     violation R10 "$base" "the clean fixture fails the gate"
