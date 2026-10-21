@@ -1,0 +1,2 @@
+# Reference: https://starship.rs/config/
+add_newline = false

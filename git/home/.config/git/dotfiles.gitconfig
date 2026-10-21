@@ -1,0 +1,9 @@
+# Shared settings, included from ~/.gitconfig by install.sh. Never written by git itself.
+[init]
+	defaultBranch = main
+[pull]
+	ff = only
+[push]
+	autoSetupRemote = true
+[fetch]
+	prune = true

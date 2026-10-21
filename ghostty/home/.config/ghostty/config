@@ -1,0 +1,6 @@
+# Reference: ghostty +show-config --default --docs
+font-family = JetBrainsMono Nerd Font
+font-size = 14
+window-padding-x = 8
+window-padding-y = 8
+macos-option-as-alt = true

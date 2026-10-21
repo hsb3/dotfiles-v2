@@ -1,0 +1,9 @@
+# Reference: https://docs.helix-editor.com/configuration.html
+theme = "onedark"
+
+[editor]
+line-number = "relative"
+bufferline = "multiple"
+
+[editor.cursor-shape]
+insert = "bar"
