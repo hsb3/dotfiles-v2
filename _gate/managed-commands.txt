@@ -22,3 +22,4 @@ jq
 just
 zoxide
 gh
+delta
