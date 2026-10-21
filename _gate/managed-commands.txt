@@ -20,3 +20,4 @@ bat
 eza
 jq
 just
+zoxide
