@@ -10,7 +10,7 @@ missing() {
 command -v brew >/dev/null || missing brew "run bootstrap.sh"
 
 here="$(cd "$(dirname "$0")" && pwd)"
-if ! brew bundle check --no-upgrade --file="$here/Brewfile" >/dev/null 2>&1; then
+if ! HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade --file="$here/Brewfile" >/dev/null 2>&1; then
   echo "Brewfile dependencies not installed: brew bundle check --no-upgrade --file=$here/Brewfile" >&2
   exit 1
 fi
