@@ -18,3 +18,4 @@ fd
 fzf
 bat
 eza
+jq
