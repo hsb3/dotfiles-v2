@@ -11,3 +11,4 @@ hx
 ghostty
 btop
 lazygit
+tmux
