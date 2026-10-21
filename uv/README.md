@@ -16,6 +16,8 @@ declaration lives in the real, untracked `~/.config/mise/config.toml`.
 
 Latest on first install; pin afterwards with `mise use --global uv@<version>`, which
 `install.sh` then leaves alone. uv's own settings go in `~/.config/uv/uv.toml`.
+Do not run `uv tool update-shell` or `uv python update-shell`, or append the completion
+line from uv's install docs to `~/.zshrc`: `~/.zshrc` is linked into this repo.
 
 ## Verify
 
