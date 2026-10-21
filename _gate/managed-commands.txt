@@ -17,3 +17,4 @@ rg
 fd
 fzf
 bat
+eza
