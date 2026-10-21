@@ -1,0 +1,7 @@
+# Install order. One package per line.
+zsh
+git
+ghostty
+starship
+mise
+helix
