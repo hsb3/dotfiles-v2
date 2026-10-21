@@ -16,3 +16,4 @@ tmuxinator
 rg
 fd
 fzf
+bat

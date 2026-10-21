@@ -1,0 +1,2 @@
+# Reference: man bat (CONFIGURATION FILE). One flag per line.
+--theme="TwoDark"
