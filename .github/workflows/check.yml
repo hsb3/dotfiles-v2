@@ -15,7 +15,7 @@ jobs:
   # so this does not replace _gate/fresh-account.md (R14). Too slow (casks) for every
   # PR, and not a merge requirement.
   install:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/ci-install'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
