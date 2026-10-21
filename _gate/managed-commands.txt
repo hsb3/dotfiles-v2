@@ -13,3 +13,4 @@ btop
 lazygit
 tmux
 tmuxinator
+rg
