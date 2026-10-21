@@ -69,7 +69,7 @@ make check
 
 which enforces, in order, printing every violation rather than stopping at the first:
 
-1. **Structure** — R1–R5, R11, R12, R15 (`_gate/check.sh structure`).
+1. **Structure** — R1–R5, R11, R12, R15, R17 (`_gate/check.sh structure`).
 2. **Shell** — R6: `/bin/bash -n`, `shellcheck --shell=bash --severity=style`,
    `shfmt -d -i 2 -ci`, and a scan for bash-4 constructs, on every `*.sh` and every
    file with a bash or sh shebang.
@@ -106,6 +106,8 @@ and red when sabotaged, one break per step, each reverted afterwards:
 | secrets | a token-shaped string in a file under `git/home/` | `R9 .: gitleaks found a secret` |
 | entrypoints | the pre-fix conflict parser restored in `install.sh` and `verify.sh` | ``R16 install.sh: `install.sh demo` expected ... ~/Application Support/demo ..., got ... ~/is ...`` |
 | entrypoints | usage errors made to exit 1 | ``R16 install.sh: `install.sh nosuch` expected exit 2 and '', got exit 1 and ''`` |
+| structure (rev. 4) | `R15-assignment-prefix.sh` (`LC_ALL=C shellcheck` undeclared) run against the pre-revision-4 command matcher | `R10 ...R15-assignment-prefix.sh: expected only R15, got: nothing` |
+| structure (rev. 4) | `HOMEBREW_NO_AUTO_UPDATE=1` and `--no-upgrade` removed from `fd/verify.sh` | `R17 fd/verify.sh: brew bundle check without --no-upgrade` and `... without the HOMEBREW_NO_AUTO_UPDATE=1 prefix` |
 | selftest | the R12 fixture made a no-op | `R10 ...R12-readme-headings.sh: expected only R12, got: nothing` |
 
 ---
@@ -158,7 +160,7 @@ package cannot reach into another package.
 **R9 — No secrets.** gitleaks finds nothing. Secret values never enter the repo; a
 package that needs one reads it from the macOS Keychain at runtime.
 
-**R10 — The rig fails when it should.** Each rule R1–R9, R11, R12, R15 has at least one
+**R10 — The rig fails when it should.** Each rule R1–R9, R11, R12, R15, R17 has at least one
 mutation fixture, and the gate fails if one is missing.
 
 **R11 — Read-only verify.** No `verify.sh` (root or package) contains `brew install`, `brew bundle`
@@ -188,7 +190,7 @@ the first line that runs that command. Each script
 carries its own copy; there is no shared helper to source (R8). The gate also fails any
 script that runs a command from the managed set (`_gate/managed-commands.txt`: the
 managers, the gate tools, and every command a package installs) in command position
-without declaring it. A package adding a command adds it to that list.
+without declaring it. Command position includes after `VAR=value` prefixes. A package adding a command adds it to that list.
 `bootstrap.sh` is exempt from the managed-set scan because it installs that set; it
 declares `# requires: none`.
 
@@ -200,6 +202,12 @@ unknown package or flag. The step runs behavior, not text, so its red proof is t
 section 3 table, not a mutation fixture. A missing manager (exit 3 from the entrypoint
 itself) is not covered: `install.sh` adds Homebrew's directories to `PATH`, so the step
 cannot hide a manager that is installed.
+
+**R17 — Read-only Brewfile checks.** Every `brew bundle check` in a script runs as
+`HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade ...`. Without `--no-upgrade`
+an installed but outdated formula counts as missing; without the prefix the check can
+auto-update Homebrew, which reaches the network and writes Homebrew's prefix from
+`verify.sh`.
 
 **R13 — Comments (prose).** Beyond the R4 header, an inline comment states a
 non-obvious why, never what the next line does. Budget: at most one inline comment per
@@ -275,6 +283,12 @@ idempotency were tested only against a temporary `HOME` on a machine that alread
 every Homebrew dependency, so the Homebrew download path and `bootstrap.sh` are unproven.
 
 ## 8. Revision history
+
+**Revision 4 (2026-10-21)**: added R17 after `verify.sh` reported working tools as
+missing whenever Homebrew had a newer version, and could auto-update Homebrew. The
+command-position matcher now sees commands after `VAR=value` prefixes; before, `X=1 cmd`
+escaped the R15 managed-set scan (proven by the new `R15-assignment-prefix.sh` fixture
+passing unflagged).
 
 **Revision 3 (2026-10-21)**: added the entrypoints step (R16) after the Stow conflict
 parser in root `install.sh`/`verify.sh` reported `~/is` for links Stow does not own,

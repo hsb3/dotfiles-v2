@@ -50,10 +50,10 @@ list_packages() {
 # Script body without its header, comment lines, or trailing " # ..." comments.
 code_of() { sed -e '1,3d' -e '/^[[:space:]]*#/d' -e 's/[[:space:]]#.*$//' "$1"; }
 
-# Matches $1 where a command name can start (line start, after ; & | ( ! { or a keyword),
-# optionally path-qualified or quoted.
+# Matches $1 where a command name can start (line start, after ; & | ( ! { a keyword, or
+# VAR=value prefixes), optionally path-qualified or quoted.
 cmd_re() {
-  echo "(^|[;&|(!{])[[:space:]]*((then|do|else|exec|if|while|until|time|xargs|command|env|sudo|nohup)[[:space:]]+)*[\"']?(/[^[:space:]]*/)?$1[\"']?([[:space:];)]|$)"
+  echo "(^|[;&|(!{])[[:space:]]*(([[:alpha:]_][[:alnum:]_]*=[^[:space:]]*|then|do|else|exec|if|while|until|time|xargs|command|env|sudo|nohup)[[:space:]]+)*[\"']?(/[^[:space:]]*/)?$1[\"']?([[:space:];)]|$)"
 }
 
 # R11: a verify.sh must not change state.
@@ -154,6 +154,15 @@ step_structure() {
 
     [ -f "$d/verify.sh" ] && check_readonly "$d/verify.sh"
   done
+
+  # R17: a Brewfile check must neither count outdated formulae as missing nor auto-update.
+  while IFS= read -r f; do
+    while IFS= read -r l1; do
+      case "$l1" in *--no-upgrade*) ;; *) violation R17 "$f" "brew bundle check without --no-upgrade" ;; esac
+      grep -Eq '(^|[^[:alnum:]_])HOMEBREW_NO_AUTO_UPDATE=1[[:space:]]+brew[[:space:]]' <<<"$l1" ||
+        violation R17 "$f" "brew bundle check without the HOMEBREW_NO_AUTO_UPDATE=1 prefix"
+    done < <(code_of "$f" | grep -E "$(cmd_re brew)" | grep -E 'brew[[:space:]]+bundle([[:space:]]+-[^[:space:]]*)*[[:space:]]+check')
+  done < <(scripts)
 
   # R4 + R15: header lines and prerequisite checks, every script
   while IFS= read -r f; do
@@ -326,7 +335,7 @@ step_selftest() {
     covered="$covered$want "
   done
   rm -rf "$tmp"
-  for r in R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R15; do
+  for r in R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R15 R17; do
     case "$covered" in *" $r "*) ;; *) violation R10 "$gate/fixtures" "no fixture for $r" ;; esac
   done
 }
