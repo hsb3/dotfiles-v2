@@ -24,7 +24,7 @@ if [ ! -s "$HOME/.local/share/zsh/site-functions/_fnox" ]; then
   status=1
 fi
 # Reads the config file only; nothing here reaches the Keychain.
-if ! MISE_OFFLINE=1 mise exec fnox -- fnox -c "$HOME/.config/fnox/config.toml" provider list 2>/dev/null | grep -qx keychain; then
+if ! MISE_OFFLINE=1 mise exec fnox -- fnox -c "$HOME/.config/fnox/config.toml" provider list 2>/dev/null | grep -x keychain >/dev/null; then
   echo "no keychain provider in ~/.config/fnox/config.toml: run $here/install.sh" >&2
   status=1
 fi

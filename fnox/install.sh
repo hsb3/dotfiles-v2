@@ -26,6 +26,6 @@ new="$(MISE_OFFLINE=1 mise exec fnox -- fnox completion zsh)"
 # fnox writes this file itself (and rewrites it on `fnox set --global`), so it is never
 # linked. FNOX_CONFIG_DIR pins it to the path checked here whatever XDG_CONFIG_HOME says.
 cfg="$HOME/.config/fnox/config.toml"
-if ! { [ -f "$cfg" ] && MISE_OFFLINE=1 mise exec fnox -- fnox -c "$cfg" provider list | grep -qx keychain; }; then
+if ! { [ -f "$cfg" ] && MISE_OFFLINE=1 mise exec fnox -- fnox -c "$cfg" provider list | grep -x keychain >/dev/null; }; then
   FNOX_CONFIG_DIR="$HOME/.config/fnox" MISE_OFFLINE=1 mise exec fnox -- fnox provider add keychain keychain --global
 fi
