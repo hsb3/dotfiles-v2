@@ -1,6 +1,6 @@
 #!/bin/bash
 # check.sh: the repo's quality gate (RULES.md section 3); `make check` runs every step.
-# requires: shellcheck shfmt gitleaks
+# requires: shellcheck shfmt gitleaks stow
 
 missing() {
   echo "missing prerequisite: $1 ($2)" >&2
@@ -9,11 +9,12 @@ missing() {
 command -v shellcheck >/dev/null || missing shellcheck "see _gate/Brewfile"
 command -v shfmt >/dev/null || missing shfmt "see _gate/Brewfile"
 command -v gitleaks >/dev/null || missing gitleaks "see _gate/Brewfile"
+command -v stow >/dev/null || missing stow "see _gate/Brewfile"
 
 gate="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$gate/.." && pwd)"
 count=0
-all_steps="structure shell references secrets selftest"
+all_steps="structure shell references secrets entrypoints selftest"
 root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md RULES.md .gitignore .githooks .github _gate .git .DS_Store "
 canon_stow="stow --dir=\"\$here\" --target=\"\$HOME\" --no-folding --ignore='\\.DS_Store' home"
 missing_fn="$(printf '%s\n' 'missing() {' "  echo \"missing prerequisite: \$1 (\$2)\" >&2" '  exit 3' '}')"
@@ -247,6 +248,58 @@ step_secrets() {
   done < <(grep -rlE --exclude-dir=.git 'gitleaks[:]allow' "$root")
 }
 
+# R16: run a root entrypoint against the fixture repo; compare its stdout and exit code.
+expect_entry() { # $1 HOME, $2 expected exit code, $3 expected stdout, $4... command
+  local h="$1" want_rc="$2" want="$3" out rc label
+  shift 3
+  out="$(HOME="$h" PATH="$stubs:$PATH" "$@" 2>/dev/null)"
+  rc=$?
+  label="${1##*/} ${*:2}"
+  if [ "$rc" != "$want_rc" ] || [ "$out" != "$want" ]; then
+    violation R16 "$root/${1##*/}" "\`${label% }\` expected exit $want_rc and '${want//$'\n'/ | }', got exit $rc and '${out//$'\n'/ | }'"
+  fi
+}
+
+step_entrypoints() {
+  local tmp r stubs m
+  [ -f "$root/install.sh" ] && [ -f "$root/verify.sh" ] || return 0
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/check.XXXXXX")"
+  r="$tmp/repo"
+  stubs="$tmp/bin"
+  cp -R "$gate/fixtures/base" "$r"
+  cp "$root/install.sh" "$root/verify.sh" "$r/"
+  mkdir -p "$r/demo/home/Application Support/demo" "$stubs" "$tmp/a/Application Support" "$tmp/b/Application Support/demo" "$tmp/ok"
+  echo demo >"$r/demo/home/Application Support/demo/demo.conf"
+  # install.sh only checks that brew and mise exist; the stubs stand in where they are not installed.
+  for m in brew mise; do
+    printf '#!/bin/sh\n' >"$stubs/$m"
+    chmod +x "$stubs/$m"
+  done
+  ln -s "$stubs" "$tmp/a/Application Support/demo"
+  echo real >"$tmp/b/Application Support/demo/demo.conf"
+  mkdir "$r/miss"
+  printf '#!/bin/sh\necho "missing prerequisite: nosuch (hint)" >&2\nexit 3\n' >"$r/miss/verify.sh"
+  chmod +x "$r/miss/verify.sh"
+  echo miss >>"$r/packages"
+
+  expect_entry "$tmp/a" 1 "FAIL demo: conflicts with existing ~/Application Support/demo
+0 ok, 1 failed" "$r/install.sh" demo
+  expect_entry "$tmp/b" 1 "FAIL demo: conflicts with existing ~/Application Support/demo/demo.conf
+0 ok, 1 failed" "$r/install.sh" demo
+  for m in install install verify; do
+    expect_entry "$tmp/ok" 0 "ok demo
+1 ok, 0 failed" "$r/$m.sh" demo
+  done
+  expect_entry "$tmp/ok" 1 "ok demo
+FAIL miss: missing prerequisite: nosuch
+1 ok, 1 failed" "$r/verify.sh"
+  for m in install verify; do
+    expect_entry "$tmp/ok" 2 "" "$r/$m.sh" nosuch
+    expect_entry "$tmp/ok" 2 "" "$r/$m.sh" --bogus
+  done
+  rm -rf "$tmp"
+}
+
 step_selftest() {
   local base="$gate/fixtures/base" tmp m want got out covered=" " r
   [ -d "$base" ] || {
@@ -290,7 +343,7 @@ while [ $# -gt 0 ]; do
       scripts | while IFS= read -r f; do shfmt -w -i 2 -ci "$f" || exit 1; done
       exit $?
       ;;
-    structure | shell | references | secrets | selftest)
+    structure | shell | references | secrets | entrypoints | selftest)
       steps="$steps $1"
       shift
       ;;
@@ -298,7 +351,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-echo "gate tools: shellcheck $(shellcheck --version | sed -n 's/^version: //p'), shfmt $(shfmt --version), gitleaks $(gitleaks version)"
+echo "gate tools: shellcheck $(shellcheck --version | sed -n 's/^version: //p'), shfmt $(shfmt --version), gitleaks $(gitleaks version), stow $(stow --version | sed 's/.* //')"
 for s in ${steps:-$all_steps}; do
   echo "== $s"
   "step_$s"
