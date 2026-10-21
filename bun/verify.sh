@@ -1,5 +1,5 @@
 #!/bin/bash
-# verify.sh: check bun is declared in mise's global config, installed, and its hook linked (read-only).
+# verify.sh: check bun is declared in mise's global config, installed, its zsh completion generated, and its hook linked (read-only).
 # requires: mise
 set -uo pipefail
 
@@ -17,6 +17,10 @@ fi
 status=0
 if ! MISE_OFFLINE=1 mise which bun >/dev/null 2>&1; then
   echo "bun is declared but not installed: run $here/install.sh" >&2
+  status=1
+fi
+if [ ! -s "$HOME/.local/share/zsh/site-functions/_bun" ]; then
+  echo "bun's zsh completion is missing: run $here/install.sh" >&2
   status=1
 fi
 while IFS= read -r f; do

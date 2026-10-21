@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh: declare uv in mise's global config if it is not declared yet, then install it.
+# install.sh: declare uv in mise's global config if it is not declared yet, install it, and generate its zsh completion.
 # requires: mise
 set -euo pipefail
 
@@ -16,4 +16,10 @@ here="$(cd "$(dirname "$0")" && pwd)"
 MISE_OFFLINE=1 mise which uv >/dev/null 2>&1 || mise install uv || {
   echo "mise could not install uv; rerun $here/install.sh" >&2
   exit 1
+}
+comp="$HOME/.local/share/zsh/site-functions/_uv"
+new="$(MISE_OFFLINE=1 mise exec uv -- uv generate-shell-completion zsh)"
+[ "$(cat "$comp" 2>/dev/null)" = "$new" ] || {
+  mkdir -p "${comp%/*}"
+  printf '%s\n' "$new" >"$comp"
 }

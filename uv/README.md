@@ -11,6 +11,9 @@ mise package). Tools installed with `uv tool install` land in `~/.local/bin`.
 `mise use --global uv@latest`, but only when no global config declares uv yet, then runs
 `mise install uv`. Nothing is linked: mise rewrites the file that declares a tool, so the
 declaration lives in the real, untracked `~/.config/mise/config.toml`.
+It then writes the zsh completion from `uv generate-shell-completion zsh` to
+`~/.local/share/zsh/site-functions/_uv`, rewriting the file only when the output
+changes.
 
 ## Customize
 
@@ -21,5 +24,5 @@ line from uv's install docs to `~/.zshrc`: `~/.zshrc` is linked into this repo.
 
 ## Verify
 
-`./verify.sh` checks that a global mise config declares uv and that `mise which uv`
-finds it.
+`./verify.sh` checks that a global mise config declares uv, that `mise which uv` finds
+it, and that the completion file exists.

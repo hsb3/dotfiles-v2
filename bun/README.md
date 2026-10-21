@@ -14,6 +14,10 @@ directory exists, so global packages never shadow Homebrew or `~/.local/bin`.
 runs `mise install bun`, and links the hook. The declaration is not linked: mise rewrites
 the file that declares a tool, so it lives in the real, untracked
 `~/.config/mise/config.toml`.
+It then writes the zsh completion from `bun completions` to
+`~/.local/share/zsh/site-functions/_bun`, rewriting the file only when the output
+changes. The hook sources it, because the script registers itself with `compdef` instead of
+completing on first load.
 
 ## Customize
 
@@ -26,4 +30,4 @@ step in Bun's install docs (it edits `~/.zshrc`, which is linked into this repo)
 ## Verify
 
 `./verify.sh` checks that a global mise config declares bun, that `mise which bun` finds
-it, and that the hook is linked.
+it, that the completion file exists, and that the hook is linked.
