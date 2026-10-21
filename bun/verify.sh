@@ -1,5 +1,5 @@
 #!/bin/bash
-# verify.sh: check bun is declared in mise's global config and installed (read-only).
+# verify.sh: check bun is declared in mise's global config, installed, and its hook linked (read-only).
 # requires: mise
 set -uo pipefail
 
@@ -14,7 +14,16 @@ if [ -z "$(MISE_OFFLINE=1 mise ls --global bun 2>/dev/null)" ]; then
   echo "bun is not declared in mise's global config: run $here/install.sh" >&2
   exit 1
 fi
+status=0
 if ! MISE_OFFLINE=1 mise which bun >/dev/null 2>&1; then
   echo "bun is declared but not installed: run $here/install.sh" >&2
-  exit 1
+  status=1
 fi
+while IFS= read -r f; do
+  rel="${f#"$here/home/"}"
+  if [ "$(readlink -f "$HOME/$rel" 2>/dev/null)" != "$(readlink -f "$f")" ]; then
+    echo "not linked: ~/$rel" >&2
+    status=1
+  fi
+done < <(find "$here/home" -type f ! -name .DS_Store)
+exit "$status"
