@@ -25,3 +25,4 @@ gh
 delta
 uv
 bun
+pnpm
