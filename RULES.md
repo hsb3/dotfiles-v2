@@ -87,7 +87,9 @@ enforces is advice, not law.
 
 **Limits.** Steps 1 and 3 are line-pattern checks over script text. They catch the
 ordinary slip (the wrong flag, a forgotten declaration, a stray write in `verify.sh`),
-not a determined workaround such as building a command name from variables. Review
+not a determined workaround such as building a command name from variables. The
+command-position matcher (`cmd_re` in `_gate/check.sh`) does not see a command after an
+assignment prefix whose quoted value contains whitespace. Review
 still reads every script against section 6. The pre-commit hook runs on the working
 tree, not only the staged files, so unstaged edits can block a commit.
 
