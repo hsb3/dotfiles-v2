@@ -26,5 +26,6 @@ delta
 uv
 bun
 pnpm
+fnox
 nvim
 zed
