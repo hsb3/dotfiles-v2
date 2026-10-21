@@ -1,0 +1,11 @@
+brew
+stow
+mise
+git
+make
+shellcheck
+shfmt
+gitleaks
+starship
+hx
+ghostty

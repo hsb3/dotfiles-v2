@@ -1,0 +1,11 @@
+name: check
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew bundle --file=_gate/Brewfile
+      - run: make check

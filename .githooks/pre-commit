@@ -1,0 +1,12 @@
+#!/bin/bash
+# pre-commit: run the gate; a red gate blocks the commit.
+# requires: make
+set -uo pipefail
+
+missing() {
+  echo "missing prerequisite: $1 ($2)" >&2
+  exit 3
+}
+command -v make >/dev/null || missing make "install the Command Line Tools: xcode-select --install"
+
+exec make check

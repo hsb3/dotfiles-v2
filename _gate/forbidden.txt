@@ -1,0 +1,15 @@
+# R7: one extended regex per line, matched case-insensitively. Blank and # lines ignored.
+# Coding agents and trackers: the install path must not know about them.
+(^|[^[:alnum:]_])kata([^[:alnum:]_]|$)
+claude
+codex
+opencode
+herdr
+(^|[^[:alnum:]_])grok([^[:alnum:]_]|$)
+anthropic
+openai
+# Machine-tied paths.
+/Users/
+# The earlier dotfiles checkout.
+~/dotfiles([/[:space:]"']|$)
+\$HOME/dotfiles([/[:space:]"']|$)

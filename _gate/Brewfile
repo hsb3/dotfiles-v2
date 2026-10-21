@@ -1,0 +1,4 @@
+# Gate tools only; bootstrap, install and verify never need these.
+brew "shellcheck"
+brew "shfmt"
+brew "gitleaks"

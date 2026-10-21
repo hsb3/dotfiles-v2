@@ -1,0 +1,307 @@
+#!/bin/bash
+# check.sh: the repo's quality gate (RULES.md section 3); `make check` runs every step.
+# requires: shellcheck shfmt gitleaks
+
+missing() {
+  echo "missing prerequisite: $1 ($2)" >&2
+  exit 3
+}
+command -v shellcheck >/dev/null || missing shellcheck "see _gate/Brewfile"
+command -v shfmt >/dev/null || missing shfmt "see _gate/Brewfile"
+command -v gitleaks >/dev/null || missing gitleaks "see _gate/Brewfile"
+
+gate="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$gate/.." && pwd)"
+count=0
+all_steps="structure shell references secrets selftest"
+root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md RULES.md .gitignore .githooks .github _gate .git .DS_Store "
+canon_stow="stow --dir=\"\$here\" --target=\"\$HOME\" --no-folding --ignore='\\.DS_Store' home"
+missing_fn="$(printf '%s\n' 'missing() {' "  echo \"missing prerequisite: \$1 (\$2)\" >&2" '  exit 3' '}')"
+self_locate="here=\"\$(cd \"\$(dirname \"\$0\")\" && pwd)\""
+
+usage() {
+  echo "usage: check.sh [--root DIR] [$(echo "$all_steps" | tr ' ' '|')]... | check.sh fmt" >&2
+  exit 2
+}
+
+violation() { # $1 rule, $2 path, $3 message
+  local rel="${2#"$root"}"
+  rel="${rel#/}"
+  echo "$1 ${rel:-.}: $3"
+  count=$((count + 1))
+}
+
+# Every script: *.sh, or any file starting with a shebang. Symlinks are linted at their target.
+scripts() {
+  find "$root" -name .git -prune -o -type f -print | sort | while IFS= read -r f; do
+    case "$f" in
+      *.sh) echo "$f" ;;
+      *) [ "$(head -c 2 "$f")" = "#!" ] && echo "$f" ;;
+    esac
+  done
+}
+
+list_packages() {
+  [ -f "$root/packages" ] || return 0
+  sed -e 's/#.*//' -e 's/[[:space:]]//g' "$root/packages" | grep -v '^$'
+}
+
+# Script body without its header, comment lines, or trailing " # ..." comments.
+code_of() { sed -e '1,3d' -e '/^[[:space:]]*#/d' -e 's/[[:space:]]#.*$//' "$1"; }
+
+# Matches $1 where a command name can start (line start, after ; & | ( ! { or a keyword),
+# optionally path-qualified or quoted.
+cmd_re() {
+  echo "(^|[;&|(!{])[[:space:]]*((then|do|else|exec|if|while|until|time|xargs|command|env|sudo|nohup)[[:space:]]+)*[\"']?(/[^[:space:]]*/)?$1[\"']?([[:space:];)]|$)"
+}
+
+# R11: a verify.sh must not change state.
+check_readonly() {
+  local f="$1" body m
+  body="$(code_of "$f")"
+  for m in \
+    'brew[[:space:]]+(install|reinstall|upgrade|uninstall|link|unlink|tap)' \
+    'brew[[:space:]]+bundle([[:space:]]+(install|cleanup|dump|-)|[[:space:]]*$)' \
+    'mise[[:space:]]+(install|use|uninstall|upgrade|prune)' \
+    '(^|[^[:alnum:]_.-])["'"'"']?(rm|mv|cp|ln|mkdir|touch|tee|truncate|dd|install|mktemp)["'"'"']?([[:space:]]|$)' \
+    'sed[[:space:]]+(-[[:alpha:]]*[[:space:]]+)*-i|[[:space:]]-delete([[:space:]]|$)' \
+    'defaults[[:space:]]+write'; do
+    grep -Eq "$m" <<<"$body" && violation R11 "$f" "modifies state: matches /$m/"
+  done
+  grep -E "$(cmd_re stow)" <<<"$body" | grep -Evq '[[:space:]](-n|--no|--simulate)([[:space:]]|$)' &&
+    violation R11 "$f" "stow without -n"
+  sed -E 's/[0-9]*>>?[[:space:]]*(\/dev\/null|&[12])//g' <<<"$body" | grep -q '>' &&
+    violation R11 "$f" "redirects output somewhere other than /dev/null or &2"
+}
+
+step_structure() {
+  local pkgs p d e f n h body req l1 l2 l3 stows m blanked chk use
+  pkgs="$(list_packages)"
+
+  # R2: packages <-> directories
+  [ -f "$root/packages" ] || violation R2 "$root/packages" "missing"
+  for p in $(sort <<<"$pkgs" | uniq -d); do violation R2 "$root/packages" "duplicate: $p"; done
+  for p in $pkgs; do [ -d "$root/$p" ] || violation R2 "$root/packages" "listed but no directory: $p"; done
+  for d in "$root"/*/; do
+    [ -d "$d" ] || continue
+    n="$(basename "$d")"
+    case "$n" in _*) continue ;; esac
+    grep -qx -- "$n" <<<"$pkgs" || violation R2 "$root/$n" "directory not listed in packages"
+  done
+
+  # R3: root allowlist (non-underscore directories are packages, judged by R2)
+  for e in "$root"/* "$root"/.[!.]*; do
+    [ -e "$e" ] || [ -L "$e" ] || continue
+    n="$(basename "$e")"
+    case "$root_allow" in *" $n "*) continue ;; esac
+    if [ -d "$e" ]; then
+      case "$n" in _* | .*) ;; *) continue ;; esac
+    fi
+    violation R3 "$e" "not allowed at the repo root"
+  done
+
+  [ -f "$root/verify.sh" ] && check_readonly "$root/verify.sh"
+
+  # R12: root README budget
+  if [ -f "$root/README.md" ]; then
+    n=$(wc -l <"$root/README.md" | tr -d ' ')
+    [ "$n" -le 100 ] || violation R12 "$root/README.md" "$n lines (max 100)"
+  fi
+
+  for p in $pkgs; do
+    d="$root/$p"
+    [ -d "$d" ] || continue
+
+    # R1: package shape
+    for f in README.md install.sh verify.sh; do [ -f "$d/$f" ] || violation R1 "$d" "missing $f"; done
+    for f in install.sh verify.sh; do
+      [ -f "$d/$f" ] && [ ! -x "$d/$f" ] && violation R1 "$d/$f" "not executable"
+    done
+    for e in "$d"/* "$d"/.[!.]*; do
+      [ -e "$e" ] || [ -L "$e" ] || continue
+      [ "$(basename "$e")" = home ] && [ ! -d "$e" ] && violation R1 "$e" "home must be a directory"
+      case "$(basename "$e")" in
+        README.md | install.sh | verify.sh | Brewfile | home | .DS_Store) ;;
+        *) violation R1 "$e" "not allowed in a package" ;;
+      esac
+    done
+
+    # R12: package README shape
+    if [ -f "$d/README.md" ]; then
+      n=$(wc -l <"$d/README.md" | tr -d ' ')
+      [ "$n" -le 60 ] || violation R12 "$d/README.md" "$n lines (max 60)"
+      h=$(awk '/^```/ { fence = !fence; next } !fence && /^## / { sub(/^## /, ""); printf "%s ", $0 }' "$d/README.md")
+      [ "$h" = "What Install Customize Verify " ] ||
+        violation R12 "$d/README.md" "## headings must be What, Install, Customize, Verify (found: ${h% })"
+    fi
+
+    # R5: linking only through the canonical stow call
+    for f in "$d/install.sh" "$d/verify.sh"; do
+      [ -f "$f" ] || continue
+      body="$(code_of "$f")"
+      grep -Eq -- '--adopt|--override' <<<"$body" && violation R5 "$f" "stow --adopt/--override is banned"
+      grep -Eq '(^|[^[:alnum:]_])ln[[:space:]]+(-[[:alpha:]]*s|--symbolic)' <<<"$body" && violation R5 "$f" "ln -s is banned; link through stow"
+    done
+    if [ -f "$d/install.sh" ]; then
+      stows=$(grep -E "$(cmd_re stow)" <<<"$(code_of "$d/install.sh")" | sed 's/^[[:space:]]*//')
+      if [ -d "$d/home" ]; then
+        [ "$stows" = "$canon_stow" ] || violation R5 "$d/install.sh" "must link with exactly one line: $canon_stow"
+      else
+        [ -z "$stows" ] || violation R5 "$d/install.sh" "calls stow but has no home/"
+      fi
+    fi
+
+    [ -f "$d/verify.sh" ] && check_readonly "$d/verify.sh"
+  done
+
+  # R4 + R15: header lines and prerequisite checks, every script
+  while IFS= read -r f; do
+    l1="$(sed -n 1p "$f")"
+    l2="$(sed -n 2p "$f")"
+    l3="$(sed -n 3p "$f")"
+    [ "$l1" = "#!/bin/bash" ] || violation R4 "$f" "line 1 must be #!/bin/bash"
+    case "$l2" in "# "?*) ;; *) violation R4 "$f" "line 2 must be a '# <purpose>' comment" ;; esac
+    case "$l3" in
+      "# requires: "?*) req="${l3#"# requires: "}" ;;
+      *)
+        violation R4 "$f" "line 3 must be '# requires: <cmd>...' or '# requires: none'"
+        continue
+        ;;
+    esac
+    if [ "$req" != none ]; then
+      [ "$(grep -x -A 3 'missing() {' "$f")" = "$missing_fn" ] ||
+        violation R15 "$f" "missing() must be exactly the function in RULES.md R15"
+      blanked="$(sed -e 's/^[[:space:]]*#.*//' -e 's/[[:space:]]#.*$//' -e 's/^[[:space:]]*//' "$f")"
+      for m in $req; do
+        chk="$(grep -nEx "command -v $m >/dev/null \|\| missing $m \".+\"" <<<"$blanked" | head -n 1 | cut -d: -f1)"
+        use="$(grep -nE "$(cmd_re "$m")" <<<"$blanked" | grep -v "command -v $m " | head -n 1 | cut -d: -f1)"
+        if [ -z "$chk" ]; then
+          violation R15 "$f" "no check line: command -v $m >/dev/null || missing $m \"<how to get it>\""
+        elif [ -n "$use" ] && [ "$use" -lt "$chk" ]; then
+          violation R15 "$f" "line $use runs $m before its prerequisite check"
+        fi
+      done
+      req=" $req "
+    else
+      req=" "
+    fi
+    # bootstrap.sh installs the managed set, so it cannot require it.
+    [ "$f" = "$root/bootstrap.sh" ] && continue
+    body="$(code_of "$f")"
+    while IFS= read -r m; do
+      case "$req" in *" $m "*) continue ;; esac
+      grep -Eq "$(cmd_re "$m")" <<<"$body" && violation R15 "$f" "runs $m without declaring it on line 3"
+    done < <(grep -Ev '^[[:space:]]*(#|$)' "$gate/managed-commands.txt")
+  done < <(scripts)
+}
+
+step_shell() {
+  local f
+  while IFS= read -r f; do
+    /bin/bash -n "$f" 2>/dev/null || violation R6 "$f" "/bin/bash -n: syntax error under bash 3.2"
+    shellcheck --shell=bash --severity=style "$f" >&2 || violation R6 "$f" "shellcheck"
+    shfmt -d -i 2 -ci "$f" >&2 || violation R6 "$f" "shfmt (run make fmt)"
+    grep -Eq '^[[:space:]]*#[[:space:]]*shellcheck[[:space:]].*disable' "$f" && violation R6 "$f" "disable directive present"
+    grep -Eq 'declare[[:space:]]+-A|local[[:space:]]+-A|[m]apfile|[r]eadarray|[c]oproc|[[:space:]][|]&[[:space:]]|\$\{[[:alnum:]_]+(\^|,)|\[-[0-9]+\]\}' "$f" &&
+      violation R6 "$f" "bash 4+ construct (not available in /bin/bash 3.2)"
+  done < <(scripts)
+  while IFS= read -r f; do
+    violation R6 "$f" "shellcheck rc files are banned; the gate's flags are the only config"
+  done < <(find "$root" -name .git -prune -o -name .shellcheckrc -print)
+}
+
+step_references() {
+  local pats f rel line p d body
+  pats="$(mktemp)"
+  grep -Ev '^[[:space:]]*(#|$)' "$gate/forbidden.txt" >"$pats"
+  # R7: forbidden references anywhere outside the list itself and the fixtures
+  while IFS= read -r f; do
+    rel="${f#"$root"/}"
+    case "$rel" in _gate/forbidden.txt | _gate/fixtures/*) continue ;; esac
+    grep -iEq -f "$pats" <<<"$rel" && violation R7 "$f" "path matches _gate/forbidden.txt"
+    while IFS=: read -r line _; do
+      violation R7 "$f" "line $line matches _gate/forbidden.txt"
+    done < <(grep -IinE -f "$pats" "$f")
+  done < <(find "$root" -name .git -prune -o -type f -print | sort)
+  rm -f "$pats"
+
+  # R8: package scripts locate themselves and never climb out of their package
+  for p in $(list_packages); do
+    d="$root/$p"
+    for f in "$d/install.sh" "$d/verify.sh"; do
+      [ -f "$f" ] || continue
+      body="$(code_of "$f")"
+      grep -Eq "(^|[/\"'[:space:]=])\.\.(\$|[/\"'[:space:]])" <<<"$body" && violation R8 "$f" "'..' path segment"
+      grep -q 'rev-parse' <<<"$body" && violation R8 "$f" "asks git for repo paths"
+      grep -Eq 'dirname[[:space:]]+"?\$\{?here' <<<"$body" && violation R8 "$f" "climbs out of its package via dirname"
+      grep -qxF "$self_locate" <(sed 's/^[[:space:]]*//' "$f") || violation R8 "$f" "must locate itself with: $self_locate"
+    done
+  done
+}
+
+step_secrets() {
+  local f
+  gitleaks dir --no-banner --redact --log-level error "$root" >&2 || violation R9 "$root" "gitleaks found a secret"
+  while IFS= read -r f; do
+    violation R9 "$f" "gitleaks allow comments are banned"
+  done < <(grep -rlE --exclude-dir=.git 'gitleaks[:]allow' "$root")
+}
+
+step_selftest() {
+  local base="$gate/fixtures/base" tmp m want got out covered=" " r
+  [ -d "$base" ] || {
+    violation R10 "$gate/fixtures" "missing base fixture"
+    return
+  }
+  tmp="$(mktemp -d)"
+  cp -R "$base" "$tmp/base"
+  "$gate/check.sh" --root "$tmp/base" structure shell references secrets >/dev/null 2>&1 ||
+    violation R10 "$base" "the clean fixture fails the gate"
+  for m in "$gate"/fixtures/R*.sh; do
+    [ -f "$m" ] || continue
+    want="$(basename "$m")"
+    want="${want%%-*}"
+    rm -rf "$tmp/m"
+    cp -R "$base" "$tmp/m"
+    "$m" "$tmp/m" || {
+      violation R10 "$m" "mutation failed to apply"
+      continue
+    }
+    out="$("$gate/check.sh" --root "$tmp/m" structure shell references secrets 2>/dev/null)"
+    got="$(sed -n 's/^\(R[0-9]*\) .*/\1/p' <<<"$out" | sort -u | tr '\n' ' ')"
+    [ "$got" = "$want " ] || violation R10 "$m" "expected only $want, got: ${got:-nothing}"
+    covered="$covered$want "
+  done
+  rm -rf "$tmp"
+  for r in R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R15; do
+    case "$covered" in *" $r "*) ;; *) violation R10 "$gate/fixtures" "no fixture for $r" ;; esac
+  done
+}
+
+steps=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --root)
+      [ -d "${2:-}" ] || usage
+      root="$(cd "$2" && pwd)"
+      shift 2
+      ;;
+    fmt)
+      scripts | while IFS= read -r f; do shfmt -w -i 2 -ci "$f" || exit 1; done
+      exit $?
+      ;;
+    structure | shell | references | secrets | selftest)
+      steps="$steps $1"
+      shift
+      ;;
+    *) usage ;;
+  esac
+done
+
+echo "gate tools: shellcheck $(shellcheck --version | sed -n 's/^version: //p'), shfmt $(shfmt --version), gitleaks $(gitleaks version)"
+for s in ${steps:-$all_steps}; do
+  echo "== $s"
+  "step_$s"
+done
+echo "check: $count violation(s)"
+[ "$count" -eq 0 ]
