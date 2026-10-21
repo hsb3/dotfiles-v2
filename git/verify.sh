@@ -12,8 +12,8 @@ command -v git >/dev/null || missing git "run bootstrap.sh"
 
 here="$(cd "$(dirname "$0")" && pwd)"
 status=0
-if ! brew bundle check --file="$here/Brewfile" >/dev/null 2>&1; then
-  echo "Brewfile dependencies not installed: brew bundle check --file=$here/Brewfile" >&2
+if ! brew bundle check --no-upgrade --file="$here/Brewfile" >/dev/null 2>&1; then
+  echo "Brewfile dependencies not installed: brew bundle check --no-upgrade --file=$here/Brewfile" >&2
   status=1
 fi
 while IFS= read -r f; do
