@@ -15,9 +15,9 @@ so the declaration lives in the real, untracked `~/.config/mise/config.toml`.
 ## Customize
 
 Latest on first install; pin afterwards with `mise use --global bun@<version>`, which
-`install.sh` then leaves alone. Bun's global settings go in
-`~/.config/.bunfig.toml` (with `XDG_CONFIG_HOME` set). Packages installed with
-`bun add -g` put executables in `~/.bun/bin`, which is not on `PATH`.
+`install.sh` then leaves alone. Global package-manager settings go in
+`~/.config/.bunfig.toml` (with `XDG_CONFIG_HOME` set). `bun add -g` links executables
+into `~/.bun/bin` (`install.globalBinDir`), which is not on `PATH`.
 
 ## Verify
 
