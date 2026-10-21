@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh: declare pnpm in mise's global config if it is not declared yet, install it, and link its PATH hook.
+# install.sh: declare pnpm in mise's global config if it is not declared yet, install it, generate its zsh completion, and link its PATH hook.
 # requires: mise stow
 set -euo pipefail
 
@@ -17,5 +17,11 @@ here="$(cd "$(dirname "$0")" && pwd)"
 MISE_OFFLINE=1 mise which pnpm >/dev/null 2>&1 || mise install pnpm || {
   echo "mise could not install pnpm; rerun $here/install.sh" >&2
   exit 1
+}
+comp="$HOME/.local/share/zsh/site-functions/_pnpm"
+new="$(MISE_OFFLINE=1 mise exec pnpm -- pnpm completion zsh)"
+[ "$(cat "$comp" 2>/dev/null)" = "$new" ] || {
+  mkdir -p "${comp%/*}"
+  printf '%s\n' "$new" >"$comp"
 }
 stow --dir="$here" --target="$HOME" --no-folding --ignore='\.DS_Store' home

@@ -14,6 +14,10 @@ the end of `PATH`, so global packages never shadow Homebrew or `~/.local/bin`.
 `mise install pnpm` if it is not installed, and links the hook. The declaration is not
 linked: mise rewrites the file that declares a tool, so it lives in the real, untracked
 `~/.config/mise/config.toml`.
+It then writes the zsh completion from `pnpm completion zsh` to
+`~/.local/share/zsh/site-functions/_pnpm`, rewriting the file only when the output
+changes. The hook sources it, because the script registers itself with `compdef` instead of
+completing on first load.
 
 ## Customize
 
@@ -27,4 +31,4 @@ Skip `pnpm setup` (it edits `~/.zshrc`, which is linked into this repo) and
 ## Verify
 
 `./verify.sh` checks that a global mise config declares pnpm, that `mise which pnpm`
-finds it, and that the hook is linked.
+finds it, that the completion file exists, and that the hook is linked.
