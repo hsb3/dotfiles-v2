@@ -10,9 +10,16 @@ fzf, the fuzzy finder, with its official zsh integration loaded from
 - `Alt-C` changes directory;
 - `**<Tab>` fuzzy-completes paths and arguments.
 
+When `fd` is installed (the fd package), the hook sets `FZF_DEFAULT_COMMAND`,
+`FZF_CTRL_T_COMMAND` and `FZF_ALT_C_COMMAND` to fd: files for plain `fzf` and `Ctrl-T`,
+directories for `Alt-C`, hidden files included, `.git` excluded, symlinks followed (the
+command from fzf's README). fd also skips anything `.gitignore` ignores, which fzf's
+built-in walker does not. Without fd, fzf keeps its built-in walker.
+
 ## Install
 
-`./install.sh` installs `fzf` and links the hook.
+`./install.sh` installs `fzf` and links the hook. fd is not a dependency; install the
+fd package to use it.
 
 ## Customize
 
