@@ -9,3 +9,4 @@ gitleaks
 starship
 hx
 ghostty
+btop
