@@ -8,6 +8,10 @@ The login shell (stock on macOS). Owns `~/.zshenv`, `~/.zprofile` and `~/.zshrc`
 setup there (`starship.zsh`, `mise.zsh`, `helix.zsh`), so removing a package removes
 its shell setup with it.
 
+`.zprofile` puts Homebrew on `PATH`, then prepends `~/.local/bin` (the XDG user binary
+directory, where `uv tool install` writes) and deduplicates `PATH`. The directory is not
+created or filled by this repo.
+
 ## Install
 
 `./install.sh` links the three files. No Homebrew dependency: zsh ships with macOS.
