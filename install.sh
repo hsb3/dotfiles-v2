@@ -65,7 +65,7 @@ for p in $all; do
     continue
   fi
   reason="$(grep -m 1 -o '^missing prerequisite: [^ ]*' <<<"$err")"
-  [ -n "$reason" ] || reason="$(grep -m 1 -o 'existing target [^ ]*' <<<"$err" | sed 's/^existing target /conflicts with existing ~\//')"
+  [ -n "$reason" ] || reason="$(sed -n -e 's/^.*existing target is [^:]*: \(.*\)$/conflicts with existing ~\/\1/p' -e 's/^.*over existing target \(.*\) since .*$/conflicts with existing ~\/\1/p' <<<"$err" | head -n 1)"
   [ -n "$reason" ] || reason="$(grep -v '^[[:space:]]*$' <<<"$err" | tail -n 1)"
   echo "FAIL $p: ${reason:-exit $rc}"
   failed=$((failed + 1))
