@@ -2,6 +2,7 @@ name: check
 on:
   push:
   pull_request:
+  workflow_dispatch:
 jobs:
   check:
     runs-on: macos-latest
@@ -9,3 +10,42 @@ jobs:
       - uses: actions/checkout@v4
       - run: brew bundle --file=_gate/Brewfile
       - run: make check
+  # A real install, twice, then verify. The runner is not a fresh machine: its image
+  # already has Homebrew and many formulas, and its own dotfiles are moved aside first,
+  # so this does not replace _gate/fresh-account.md (R14). Too slow (casks) for every
+  # PR, and not a merge requirement.
+  install:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/ci-install'
+    runs-on: macos-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Move aside runner files that v2 links
+        run: |
+          find ./*/home -type f ! -name .DS_Store | while IFS= read -r f; do
+            t="$HOME/${f#./*/home/}"
+            if [ -e "$t" ] && [ ! -L "$t" ]; then mv "$t" "$t.pre-v2" && echo "moved aside: $t"; fi
+          done
+      - run: ./bootstrap.sh
+      - name: First install
+        run: ./install.sh
+      - name: Second install changes nothing in v2's paths
+        run: |
+          m="$(mktemp)"
+          sleep 1
+          ./install.sh
+          prefix="$(brew --prefix)"
+          paths=("$HOME/.gitconfig" "$HOME/.config/gh/config.yml" "$HOME/.config/mise/config.toml"
+            "$HOME/.config/fnox/config.toml" "$HOME/.local/share/zsh/site-functions")
+          while IFS= read -r f; do paths+=("$HOME/${f#./*/home/}"); done < <(find ./*/home -type f ! -name .DS_Store)
+          changed="$(find "${paths[@]}" -newer "$m" 2>/dev/null
+            find "$HOME/.local/share/mise/installs" "$prefix/Cellar" "$prefix/Caskroom" -mindepth 1 -maxdepth 2 -newer "$m" 2>/dev/null)"
+          if [ -n "$changed" ]; then
+            echo "changed by the second install:"
+            echo "$changed"
+            exit 1
+          fi
+          echo "second install changed nothing in ${#paths[@]} v2 paths, mise installs, Cellar or Caskroom"
+      - run: ./verify.sh
