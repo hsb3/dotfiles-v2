@@ -10,3 +10,4 @@ starship
 hx
 ghostty
 btop
+lazygit
