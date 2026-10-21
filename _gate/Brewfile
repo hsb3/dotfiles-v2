@@ -2,3 +2,4 @@
 brew "shellcheck"
 brew "shfmt"
 brew "gitleaks"
+brew "stow"

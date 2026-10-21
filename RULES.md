@@ -53,7 +53,8 @@ judged only by the tool that reads them.
 A package's tools come from its own `Brewfile` or mise. The gate's tools come from
 `_gate/Brewfile` and are never needed by bootstrap, install or verify.
 
-Gate tooling as measured: **shellcheck 0.11.0**, **shfmt 3.14.1**, **gitleaks 8.30.1**.
+Gate tooling as measured: **shellcheck 0.11.0**, **shfmt 3.14.1**, **gitleaks 8.30.1**,
+**stow 2.4.1** (the entrypoints step runs the real linker).
 Homebrew cannot pin formula versions, so these are recorded, not pinned: `make check`
 prints the versions it ran with, and CI installs whatever Homebrew currently ships. A
 tool upgrade that turns the gate red is a finding to fix, not a reason to loosen it.
@@ -74,7 +75,10 @@ which enforces, in order, printing every violation rather than stopping at the f
    file with a bash or sh shebang.
 3. **References** — R7, R8 (`_gate/check.sh references`).
 4. **Secrets** — R9: `gitleaks dir --no-banner .`.
-5. **Self-test** — R10: `_gate/fixtures/base/` is a minimal valid repo that must pass
+5. **Entrypoints** — R16: the root `install.sh` and `verify.sh`, copied into a temporary
+   repo built from `_gate/fixtures/base`, run against temporary `HOME`s. Every write
+   stays inside that temporary directory, and nothing touches the network.
+6. **Self-test** — R10: `_gate/fixtures/base/` is a minimal valid repo that must pass
    steps 1–4. Each `_gate/fixtures/R<n>-<slug>.sh` mutates a copy of it; steps 1–4 must
    then report rule R<n> and no other rule.
 
@@ -100,6 +104,8 @@ and red when sabotaged, one break per step, each reverted afterwards:
 | shell | `for f in $(ls)` appended to `git/install.sh` | `R6 git/install.sh: shellcheck` |
 | references | an absolute home-directory path appended to `git/README.md` | `R7 git/README.md: line 28 matches _gate/forbidden.txt` |
 | secrets | a token-shaped string in a file under `git/home/` | `R9 .: gitleaks found a secret` |
+| entrypoints | the pre-fix conflict parser restored in `install.sh` and `verify.sh` | ``R16 install.sh: `install.sh demo` expected ... ~/Application Support/demo ..., got ... ~/is ...`` |
+| entrypoints | usage errors made to exit 1 | ``R16 install.sh: `install.sh nosuch` expected exit 2 and '', got exit 1 and ''`` |
 | selftest | the R12 fixture made a no-op | `R10 ...R12-readme-headings.sh: expected only R12, got: nothing` |
 
 ---
@@ -186,6 +192,15 @@ without declaring it. A package adding a command adds it to that list.
 `bootstrap.sh` is exempt from the managed-set scan because it installs that set; it
 declares `# requires: none`.
 
+**R16 — Entrypoint behavior.** For these cases from section 5, root `install.sh` and
+`verify.sh` print exactly the specified stdout and exit with the specified code: both Stow
+conflict forms (a link Stow does not own, and a real file), each on a path containing a
+space; a clean install, a second install, and verify; a package script exiting 3; and an
+unknown package or flag. The step runs behavior, not text, so its red proof is the
+section 3 table, not a mutation fixture. A missing manager (exit 3 from the entrypoint
+itself) is not covered: `install.sh` adds Homebrew's directories to `PATH`, so the step
+cannot hide a manager that is installed.
+
 **R13 — Comments (prose).** Beyond the R4 header, an inline comment states a
 non-obvious why, never what the next line does. Budget: at most one inline comment per
 function, plus one per non-obvious external constraint (an OS quirk, a tool bug).
@@ -260,6 +275,11 @@ idempotency were tested only against a temporary `HOME` on a machine that alread
 every Homebrew dependency, so the Homebrew download path and `bootstrap.sh` are unproven.
 
 ## 8. Revision history
+
+**Revision 3 (2026-10-21)**: added the entrypoints step (R16) after the Stow conflict
+parser in root `install.sh`/`verify.sh` reported `~/is` for links Stow does not own,
+and truncated paths with spaces. No line-pattern check could catch that. Stow joins
+the gate's tools in `_gate/Brewfile`.
 
 **Revision 2 (2026-10-21)** — after an adversarial review that got 21 of 31 sabotages
 past the first gate and found 3 behavior defects. Fixed: `git config --global` wrote
