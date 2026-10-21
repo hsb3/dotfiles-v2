@@ -13,7 +13,7 @@ here="$(cd "$(dirname "$0")" && pwd)"
 # mise rewrites whichever global file declares a tool, so the declaration lives in the
 # real ~/.config/mise/config.toml, never in a file linked from this repo.
 [ -n "$(MISE_OFFLINE=1 mise ls --global uv 2>/dev/null)" ] || mise use --global uv@latest
-mise install uv || {
+MISE_OFFLINE=1 mise which uv >/dev/null 2>&1 || mise install uv || {
   echo "mise could not install uv; rerun $here/install.sh" >&2
   exit 1
 }
