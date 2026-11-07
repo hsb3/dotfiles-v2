@@ -13,7 +13,7 @@ has no config file, so nothing is linked.
 
 fd reads an optional global ignore file, `~/.config/fd/ignore` (gitignore syntax). To
 share one, add it under `home/.config/fd/` and add the Stow line to `install.sh`
-(RULES.md R5). Flags otherwise go on the command line or in a shell alias.
+. Flags otherwise go on the command line or in a shell alias.
 
 ## Verify
 

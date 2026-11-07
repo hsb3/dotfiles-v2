@@ -14,8 +14,7 @@ checkouts, so they stay machine-local.
 
 Projects live in `~/.config/tmuxinator/<name>.yml`. `tmuxinator new <name>` creates one
 and opens it in `$EDITOR`; `tmuxinator start <name>` runs it. To share a project file,
-add it under `home/.config/tmuxinator/` and add the Stow line to `install.sh`
-(RULES.md R5).
+add it under `home/.config/tmuxinator/` and add the Stow line to `install.sh`.
 
 ## Verify
 

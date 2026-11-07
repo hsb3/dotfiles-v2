@@ -1,7 +1,7 @@
 # dotfiles
 
 macOS dotfiles. One directory per tool; each owns its config, its install and verify
-scripts, its Homebrew dependencies and its README. The contract is [RULES.md](RULES.md).
+scripts, its Homebrew dependencies and its README.
 
 ## Set up a Mac
 

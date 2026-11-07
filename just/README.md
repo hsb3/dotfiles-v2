@@ -13,7 +13,7 @@ shell hook: zsh completion comes from Homebrew's `site-functions`.
 
 Recipes live in each project's `justfile`. A global justfile, run with `just -g`, goes in
 `~/.config/just/justfile`; to share one, add it under `home/.config/just/` and add the
-Stow line to `install.sh` (RULES.md R5). Syntax: `just --help` and the just manual.
+Stow line to `install.sh`. Syntax: `just --help` and the just manual.
 
 ## Verify
 

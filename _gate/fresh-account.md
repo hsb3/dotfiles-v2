@@ -1,6 +1,7 @@
 # Fresh-machine proof
 
-The success condition in RULES.md section 1, run by hand before declaring a milestone.
+The success condition (a stock account to a working environment), run by hand before
+declaring a milestone.
 `make check` cannot run it: it needs a macOS account that has never seen this repo.
 
 Pick a venue (A or B), then run the checklist from step 4. Record which venue was used.
@@ -81,6 +82,6 @@ and `rm -r /tmp/v2-share`. The pulled image stays in Tart's cache for the next r
    - in a VM only (its Keychain is disposable): `fnox set V2_CHECK --provider keychain
      --global` with any value, then `fnox exec -- printenv V2_CHECK` prints it after
      macOS's access prompt, and `printenv V2_CHECK` in the shell prints nothing.
-9. Record the date, venue, macOS version and any deviation in RULES.md section 7. Then
+9. Record the date, venue, macOS version and any deviation. Then
    discard the venue: delete the VM (venue A) or the test account (venue B, System
    Settings > Users & Groups).
