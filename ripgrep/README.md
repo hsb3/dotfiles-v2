@@ -13,7 +13,7 @@ package sets nothing, so no config file is linked.
 ## Customize
 
 To share flags, add `home/.config/ripgrep/config` (one flag per line), add the Stow line
-to `install.sh` (RULES.md R5), and ship
+to `install.sh`, and ship
 `home/.config/zsh/conf.d/ripgrep.zsh` exporting `RIPGREP_CONFIG_PATH` to that file.
 `man rg` documents the config format.
 

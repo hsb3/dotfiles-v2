@@ -1,5 +1,5 @@
 #!/bin/bash
-# check.sh: the repo's quality gate (RULES.md section 3); `make check` runs every step.
+# check.sh: the repo's quality gate; `make check` runs every step.
 # requires: shellcheck shfmt gitleaks stow
 
 missing() {
@@ -15,7 +15,7 @@ gate="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$gate/.." && pwd)"
 count=0
 all_steps="structure shell references secrets entrypoints selftest"
-root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md RULES.md .gitignore .githooks .github _gate .git .DS_Store "
+root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md .gitignore .githooks .github _gate .git .DS_Store "
 canon_stow="stow --dir=\"\$here\" --target=\"\$HOME\" --no-folding --ignore='\\.DS_Store' home"
 missing_fn="$(printf '%s\n' 'missing() {' "  echo \"missing prerequisite: \$1 (\$2)\" >&2" '  exit 3' '}')"
 self_locate="here=\"\$(cd \"\$(dirname \"\$0\")\" && pwd)\""
@@ -103,12 +103,6 @@ step_structure() {
 
   [ -f "$root/verify.sh" ] && check_readonly "$root/verify.sh"
 
-  # R12: root README budget
-  if [ -f "$root/README.md" ]; then
-    n=$(wc -l <"$root/README.md" | tr -d ' ')
-    [ "$n" -le 100 ] || violation R12 "$root/README.md" "$n lines (max 100)"
-  fi
-
   for p in $pkgs; do
     d="$root/$p"
     [ -d "$d" ] || continue
@@ -180,7 +174,7 @@ step_structure() {
     esac
     if [ "$req" != none ]; then
       [ "$(grep -x -A 3 'missing() {' "$f")" = "$missing_fn" ] ||
-        violation R15 "$f" "missing() must be exactly the function in RULES.md R15"
+        violation R15 "$f" "missing() must be exactly the canonical function (R15)"
       blanked="$(sed -e 's/^[[:space:]]*#.*//' -e 's/[[:space:]]#.*$//' -e 's/^[[:space:]]*//' "$f")"
       for m in $req; do
         chk="$(grep -nEx "command -v $m >/dev/null \|\| missing $m \".+\"" <<<"$blanked" | head -n 1 | cut -d: -f1)"

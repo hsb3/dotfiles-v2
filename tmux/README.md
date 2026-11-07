@@ -14,7 +14,7 @@ terminal's `xterm-ghostty` terminfo, which declares it.
 
 tmux reads `~/.config/tmux/tmux.conf` (the zsh package sets `XDG_CONFIG_HOME`). To share
 settings, add the file under `home/.config/tmux/` and add the Stow line to `install.sh`
-(RULES.md R5). `tmux show-options -g` lists the current values; reload a running server
+. `tmux show-options -g` lists the current values; reload a running server
 with `tmux source-file ~/.config/tmux/tmux.conf`.
 
 ## Verify
