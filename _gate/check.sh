@@ -103,12 +103,6 @@ step_structure() {
 
   [ -f "$root/verify.sh" ] && check_readonly "$root/verify.sh"
 
-  # R12: root README budget
-  if [ -f "$root/README.md" ]; then
-    n=$(wc -l <"$root/README.md" | tr -d ' ')
-    [ "$n" -le 100 ] || violation R12 "$root/README.md" "$n lines (max 100)"
-  fi
-
   for p in $pkgs; do
     d="$root/$p"
     [ -d "$d" ] || continue

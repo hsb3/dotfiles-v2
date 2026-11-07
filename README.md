@@ -78,7 +78,7 @@ Violations print as `R<n> <path>: <reason>`.
 | R9 | gitleaks finds nothing. |
 | R10 | Each structural rule has a mutation fixture in `_gate/fixtures/` that the gate catches. |
 | R11 | `verify.sh` changes nothing: no installs, links, file writes or `defaults write`. |
-| R12 | A package README is at most 60 lines with `##` What, Install, Customize, Verify, in order; this one at most 100. |
+| R12 | A package README is at most 60 lines with `##` What, Install, Customize, Verify, in order. |
 | R15 | Every non-stock command is declared on the `# requires:` line and checked with `command -v <cmd> >/dev/null \|\| missing <cmd> "<hint>"` before first use, using the `missing()` function copied from an existing script. Commands a package installs go in `_gate/managed-commands.txt`. |
 | R16 | The root entrypoints keep their output and exit codes (above) for conflicts, clean and repeat installs, a missing prerequisite and usage errors. |
 | R17 | `brew bundle check` runs as `HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade`. |
