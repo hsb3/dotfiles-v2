@@ -6,7 +6,9 @@ The login shell (stock on macOS). Owns `~/.zshenv`, `~/.zprofile` and `~/.zshrc`
 
 `.zshrc` sources every `~/.config/zsh/conf.d/*.zsh`. Other packages ship their shell
 setup there (`starship.zsh`, `mise.zsh`, `helix.zsh`), so removing a package removes
-its shell setup with it.
+its shell setup with it. This package ships `functions.zsh`: `mkcd <dir>`, `extract
+<archive>` (tar, zip, gz, bz2, xz), `port <n>` (what holds a port) and `ports` (every
+listener), built on stock macOS tools.
 
 Before `compinit`, `.zshrc` adds two completion directories to `fpath` when they exist:
 Homebrew's `share/zsh/site-functions` (so nested non-login shells complete Homebrew tools
@@ -19,7 +21,7 @@ created or filled by this repo.
 
 ## Install
 
-`./install.sh` links the three files. No Homebrew dependency: zsh ships with macOS.
+`./install.sh` links the three files and `functions.zsh`. No Homebrew dependency: zsh ships with macOS.
 An existing `~/.zshrc` (or the others) blocks the link; move it aside first.
 
 ## Customize
@@ -29,4 +31,4 @@ The directory is real (not a link into this repo), so files added there stay loc
 
 ## Verify
 
-`./verify.sh` checks the three files are linked here.
+`./verify.sh` checks every file under `home/` is linked here.
