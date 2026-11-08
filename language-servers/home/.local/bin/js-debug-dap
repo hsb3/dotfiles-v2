@@ -1,0 +1,14 @@
+#!/bin/bash
+# js-debug-dap: start VS Code's js-debug DAP server from wherever mise installed it.
+# requires: mise node
+set -euo pipefail
+
+missing() {
+  echo "missing prerequisite: $1 ($2)" >&2
+  exit 3
+}
+command -v mise >/dev/null || missing mise "run bootstrap.sh"
+command -v node >/dev/null || missing node "comes with prettier: run the language-servers install.sh"
+
+dir="$(mise where github:microsoft/vscode-js-debug)"
+exec node "$dir/src/dapDebugServer.js" "$@"

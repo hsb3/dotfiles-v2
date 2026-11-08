@@ -1,0 +1,21 @@
+# Python
+brew "ruff"
+brew "ty"
+# TypeScript / JavaScript: TypeScript 7's `tsc --lsp`, oxlint (lint + LSP), prettier.
+# Why these over the alternatives: README.md
+brew "typescript"
+brew "oxlint"
+brew "prettier"
+# Go: goimports pulls in Go itself
+brew "gopls"
+brew "goimports"
+brew "delve"
+# Config and docs
+brew "yaml-language-server"
+brew "taplo"
+brew "marksman"
+brew "bash-language-server"
+brew "dockerfile-language-server"
+brew "docker-compose-langserver"
+brew "vscode-langservers-extracted"
+brew "postgres-language-server"
