@@ -1,0 +1,214 @@
+# Language servers, formatters, and debug adapters, installed by the language-servers
+# package. Check with `hx --health <language>`.
+
+# ── Python ────────────────────────────────────────────────────────
+[[language]]
+name = "python"
+language-servers = ["ty", "ruff"]   # prefer ty+ruff over jedi/pylsp
+auto-format = true
+formatter = { command = "ruff", args = ["format", "-"] }
+
+# Helix ships no Python debugger; this whole block is ours.
+[language.debugger]
+name = "debugpy"
+transport = "stdio"
+command = "debugpy-adapter"
+
+# integratedTerminal, not internalConsole: debugpy with internalConsole freezes Helix.
+[[language.debugger.templates]]
+name = "source"
+request = "launch"
+completion = [ { name = "entrypoint", completion = "filename", default = "." } ]
+args = { program = "{0}", console = "integratedTerminal" }
+
+[[language.debugger.templates]]
+name = "module"
+request = "launch"
+completion = [ { name = "module" } ]
+args = { module = "{0}", console = "integratedTerminal" }
+
+[[language.debugger.templates]]
+name = "attach"
+request = "attach"
+completion = [ "pid" ]
+args = { processId = "{0}" }
+
+# ── Go ────────────────────────────────────────────────────────────
+# Helix already ships the full dlv debugger block; `brew install delve` is all
+# that was missing, so there is nothing to configure here.
+[[language]]
+name = "go"
+language-servers = ["gopls"]
+auto-format = true
+formatter = { command = "goimports" }   # gofmt, plus adds/removes imports
+
+# ── TypeScript / JavaScript ───────────────────────────────────────
+# Helix ships a js-debug-dap block for `javascript` only, and deliberately
+# leaves command/args blank for the user to fill in. `typescript` and `tsx` get
+# no debugger upstream at all, so those blocks are written out in full.
+# Node 26 strips types natively, so .ts files are launched directly — no build
+# step and no source maps (type stripping preserves line numbers 1:1).
+# Servers: TypeScript 7's native `tsc --lsp` instead of typescript-language-server, which
+# wraps the old JS tsserver; oxlint for lint. TS 7 can't load JS compiler plugins.
+
+[[language]]
+name = "typescript"
+language-servers = ["tsgo", "oxlint"]
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "typescript"] }
+
+[language.debugger]
+name = "js-debug-dap"
+transport = "tcp"
+command = "js-debug-dap"   # the language-servers package's launcher for mise's js-debug
+port-arg = "{} 127.0.0.1"   # pin IPv4; bare `localhost` binds ::1 and Helix dials 127.0.0.1
+quirks = { absolute-paths = true }
+
+[[language.debugger.templates]]
+name = "source"
+request = "launch"
+completion = [ { name = "main", completion = "filename", default = "index.ts" } ]
+args = { type = "pwa-node", program = "{0}", console = "internalConsole", skipFiles = [ "<node_internals>/**" ] }
+
+[[language]]
+name = "tsx"
+language-servers = ["tsgo", "oxlint"]
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "typescript"] }
+
+[language.debugger]
+name = "js-debug-dap"
+transport = "tcp"
+command = "js-debug-dap"
+port-arg = "{} 127.0.0.1"
+quirks = { absolute-paths = true }
+
+[[language.debugger.templates]]
+name = "source"
+request = "launch"
+completion = [ { name = "main", completion = "filename", default = "index.tsx" } ]
+args = { type = "pwa-node", program = "{0}", console = "internalConsole", skipFiles = [ "<node_internals>/**" ] }
+
+[[language]]
+name = "javascript"
+language-servers = ["tsgo", "oxlint"]
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "babel"] }
+
+[language.debugger]
+name = "js-debug-dap"
+transport = "tcp"
+command = "js-debug-dap"
+port-arg = "{} 127.0.0.1"
+quirks = { absolute-paths = true }
+
+[[language.debugger.templates]]
+name = "source"
+request = "launch"
+completion = [ { name = "main", completion = "filename", default = "index.js" } ]
+args = { type = "pwa-node", program = "{0}", console = "internalConsole", skipFiles = [ "<node_internals>/**" ] }
+
+[[language]]
+name = "jsx"
+language-servers = ["tsgo", "oxlint"]
+auto-format = true
+formatter = { command = "prettier", args = ["--parser", "babel"] }
+
+[language.debugger]
+name = "js-debug-dap"
+transport = "tcp"
+command = "js-debug-dap"
+port-arg = "{} 127.0.0.1"
+quirks = { absolute-paths = true }
+
+[[language.debugger.templates]]
+name = "source"
+request = "launch"
+completion = [ { name = "main", completion = "filename", default = "index.jsx" } ]
+args = { type = "pwa-node", program = "{0}", console = "internalConsole", skipFiles = [ "<node_internals>/**" ] }
+
+# ── Everyday config languages ─────────────────────────────────────
+# dockerfile, docker-compose, json, bash, markdown and toml need no
+# language-servers entry: Helix's defaults already name the right binaries
+# (the dockerfile-language-server formula really does install `docker-langserver`)
+# and brew now supplies them. What follows is only the parts defaults don't
+# cover -- formatters, YAML schemas, and SQL, for which Helix ships no server.
+#
+# auto-format is deliberately OFF for these. Unlike the source languages above,
+# these are shared-repo file types, and reformatting every YAML or Markdown on
+# save makes noisy diffs in projects with their own style. `:format` still
+# formats on demand; add `auto-format = true` to a block to make it automatic.
+
+[[language]]
+name = "yaml"
+language-servers = ["yaml-language-server"]   # drop ansible-language-server (not installed)
+formatter = { command = "prettier", args = ["--parser", "yaml"] }
+
+[[language]]
+name = "docker-compose"
+formatter = { command = "prettier", args = ["--parser", "yaml"] }
+
+[[language]]
+name = "json"
+formatter = { command = "prettier", args = ["--parser", "json"] }
+
+[[language]]
+name = "jsonc"
+formatter = { command = "prettier", args = ["--parser", "jsonc"] }   # keeps comments
+
+[[language]]
+name = "toml"
+language-servers = ["taplo"]   # drop tombi (not installed)
+formatter = { command = "taplo", args = ["fmt", "-"] }
+
+[[language]]
+name = "bash"
+formatter = { command = "shfmt", args = ["-i", "2"] }   # 2 spaces
+
+[[language]]
+name = "markdown"
+language-servers = ["marksman"]   # drop markdown-oxide (not installed)
+formatter = { command = "prettier", args = ["--parser", "markdown"] }
+
+# Helix ships no SQL language server at all, so both halves are ours.
+# Postgres-only; schema-aware checks need a postgres-language-server.jsonc in the project.
+[[language]]
+name = "sql"
+language-servers = ["postgres-language-server"]
+
+# ── Language-server settings ──────────────────────────────────────
+# Helix declares these as bare command entries with no config, so these blocks
+# add settings rather than replace anything.
+
+[language-server.postgres-language-server]
+command = "postgres-language-server"
+args = ["lsp-proxy"]
+
+[language-server.tsgo]
+command = "tsc"
+args = ["--lsp", "--stdio"]
+
+[language-server.oxlint]
+command = "oxlint"
+args = ["--lsp"]
+
+# Schema-aware YAML. schemaStore pulls the catalog over the network and matches
+# by filename, which is what gives GitHub Actions, compose files and the rest
+# their completion and validation for free. Offline just means no schemas.
+[language-server.yaml-language-server.config.yaml]
+validate = true
+hover = true
+completion = true
+format = { enable = true }
+
+[language-server.yaml-language-server.config.yaml.schemaStore]
+enable = true
+url = "https://www.schemastore.org/api/json/catalog.json"
+
+# Explicit mappings for the ones worth pinning. `kubernetes` is a keyword
+# yaml-language-server resolves to the bundled k8s schema; the value is the
+# glob of files to apply it to, since k8s manifests aren't detectable by name.
+[language-server.yaml-language-server.config.yaml.schemas]
+"https://www.schemastore.org/github-workflow.json" = ".github/workflows/*.{yml,yaml}"
+"https://www.schemastore.org/github-action.json" = "action.{yml,yaml}"
+kubernetes = "{k8s,kubernetes,manifests,deploy,charts}/**/*.{yml,yaml}"
