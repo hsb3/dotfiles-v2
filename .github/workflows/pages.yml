@@ -18,11 +18,10 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      # Build-time only: the root allowlist (R3) keeps _config.yml out of the repo, and
-      # generating the package index from `packages` means no list to keep in sync.
+      # The package index is generated from `packages`, so there is no list to keep in sync.
       - name: Site config and package index
         run: |
-          printf 'title: dotfiles\ninclude: [_gate]\n' >_config.yml
+          cp .github/pages/_config.yml _config.yml
           printf '\n## Packages\n\n' >>README.md
           grep -Ev '^[[:space:]]*(#|$)' packages | while IFS= read -r p; do
             printf -- '- [%s](%s/README.md)\n' "$p" "$p"

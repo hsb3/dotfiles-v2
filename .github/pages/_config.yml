@@ -1,0 +1,4 @@
+# Copied to the repo root by .github/workflows/pages.yml at build time: Jekyll reads
+# _config.yml only from the source root, and the root allowlist (R3) keeps it out of git there.
+title: dotfiles
+include: [_gate]
