@@ -15,7 +15,7 @@ gate="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$gate/.." && pwd)"
 count=0
 all_steps="structure shell references secrets entrypoints selftest"
-root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md .gitignore .githooks .github _gate .git .DS_Store "
+root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md LICENSE .gitignore .githooks .github _gate .git .DS_Store "
 canon_stow="stow --dir=\"\$here\" --target=\"\$HOME\" --no-folding --ignore='\\.DS_Store' home"
 missing_fn="$(printf '%s\n' 'missing() {' "  echo \"missing prerequisite: \$1 (\$2)\" >&2" '  exit 3' '}')"
 self_locate="here=\"\$(cd \"\$(dirname \"\$0\")\" && pwd)\""

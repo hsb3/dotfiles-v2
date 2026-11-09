@@ -7,6 +7,9 @@ Done means: on a new macOS account with only stock tools, `./bootstrap.sh` then
 `./install.sh` exit 0, `./verify.sh` reports every package `ok`, and a second
 `./install.sh` changes nothing. The procedure is `_gate/fresh-account.md`.
 
+Every README here is also published at https://hsb3.github.io/dotfiles-v2/ by
+`.github/workflows/pages.yml` on each push to `main`.
+
 Out of scope, never a package: coding-agent configuration, product code, plugins,
 trackers, secret values (a package that needs one reads it from the macOS Keychain at
 runtime), launchd jobs.
@@ -69,7 +72,7 @@ Violations print as `R<n> <path>: <reason>`.
 |---|---|
 | R1 | A package holds `README.md`, executable `install.sh` and `verify.sh`, optional `Brewfile` and `home/`, nothing else. |
 | R2 | `packages` names exactly the top-level directories not starting with `_` or `.`, once each. |
-| R3 | The root holds only the entrypoints, `packages`, `Makefile`, `README.md`, `.gitignore`, `.githooks/`, `.github/`, `_gate/` and packages. |
+| R3 | The root holds only the entrypoints, `packages`, `Makefile`, `README.md`, `LICENSE`, `.gitignore`, `.githooks/`, `.github/`, `_gate/` and packages. |
 | R4 | Line 1 `#!/bin/bash`; line 2 a `# ` purpose comment; line 3 `# requires: <cmd> ...` or `# requires: none`. |
 | R5 | `home/` is linked only by `stow --dir="$here" --target="$HOME" --no-folding --ignore='\.DS_Store' home`; no `--adopt`, `--override` or `ln -s`. |
 | R6 | `bash -n`, shellcheck at style severity with no disable directives, and shfmt (`-i 2 -ci`) pass. |
