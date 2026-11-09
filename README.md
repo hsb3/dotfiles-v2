@@ -10,7 +10,7 @@ Done means: on a new macOS account with only stock tools, `./bootstrap.sh` then
 Every README here is also published at https://hsb3.github.io/dotfiles-v2/ by
 `.github/workflows/pages.yml` on each push to `main`.
 
-Out of scope, never a package: coding-agent configuration, product code, plugins,
+Out of scope, never a package: coding-agent configuration and plugins, product code,
 trackers, secret values (a package that needs one reads it from the macOS Keychain at
 runtime), launchd jobs.
 
