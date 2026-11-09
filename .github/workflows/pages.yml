@@ -2,32 +2,33 @@ name: pages
 on:
   push:
     branches: [main]
+  # Build only, so a site change is checked before it merges.
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .github/pages/* .
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
+      - uses: actions/upload-pages-artifact@v3
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      # The package index is generated from `packages`, so there is no list to keep in sync.
-      - name: Site config and package index
-        run: |
-          cp .github/pages/_config.yml _config.yml
-          printf '\n## Packages\n\n' >>README.md
-          grep -Ev '^[[:space:]]*(#|$)' packages | while IFS= read -r p; do
-            printf -- '- [%s](%s/README.md)\n' "$p" "$p"
-          done >>README.md
-      - uses: actions/configure-pages@v5
-      - uses: actions/jekyll-build-pages@v1
-      - uses: actions/upload-pages-artifact@v3
       - id: deploy
         uses: actions/deploy-pages@v4

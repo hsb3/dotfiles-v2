@@ -1,4 +1,28 @@
-# Copied to the repo root by .github/workflows/pages.yml at build time: Jekyll reads
-# _config.yml only from the source root, and the root allowlist (R3) keeps it out of git there.
+# Site config. .github/workflows/pages.yml copies this directory to the repo root at build
+# time: Jekyll reads _config.yml only from the source root, and R3 keeps it out of git there.
 title: dotfiles
+description: macOS dotfiles, one directory per tool.
+remote_theme: just-the-docs/just-the-docs@v0.10.1
+plugins: [jekyll-remote-theme]
 include: [_gate]
+exclude: [_gate/fixtures]
+aux_links:
+  GitHub: [https://github.com/hsb3/dotfiles-v2]
+aux_links_new_tab: true
+gh_edit_link: true
+gh_edit_link_text: Edit this page on GitHub
+gh_edit_repository: https://github.com/hsb3/dotfiles-v2
+gh_edit_branch: main
+gh_edit_view_mode: tree
+back_to_top: true
+back_to_top_text: Back to top
+# Pages carry no front matter; titles come from each file's first heading.
+defaults:
+  - scope: {path: README.md}
+    values: {nav_order: 1}
+  - scope: {path: packages.md}
+    values: {nav_order: 2, has_children: true}
+  - scope: {path: "*/README.md"}
+    values: {parent: Packages}
+  - scope: {path: _gate/fresh-account.md}
+    values: {nav_order: 3}
