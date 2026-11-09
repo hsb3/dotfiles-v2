@@ -4,8 +4,8 @@
 
 Bun, the JavaScript runtime, package manager and test runner, installed and versioned by
 mise (from the mise package). `~/.config/zsh/conf.d/bun.zsh` appends `~/.bun/bin`, where
-`bun add -g` links executables (`install.globalBinDir`), to the end of `PATH` once that
-directory exists, so global packages never shadow Homebrew or `~/.local/bin`.
+`bun add -g` links executables (`install.globalBinDir`), to the end of `PATH` (even before it
+exists), so global packages never shadow Homebrew or `~/.local/bin`.
 
 ## Install
 
