@@ -10,6 +10,32 @@ jobs:
       - uses: actions/checkout@v4
       - run: brew bundle --file=_gate/Brewfile
       - run: make check
+  # The install job is too slow for PRs, so a PR installs only the packages that ship zsh
+  # setup and starts an interactive shell: startup breakage fails before merge.
+  shell:
+    if: github.event_name == 'pull_request'
+    runs-on: macos-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Packages with zsh setup
+        id: pkgs
+        run: echo "list=zsh $(ls -d ./*/home/.config/zsh/conf.d | cut -d/ -f2 | grep -vx zsh | tr '\n' ' ')" >>"$GITHUB_OUTPUT"
+      - name: Move aside runner files those packages link
+        env:
+          PKGS: ${{ steps.pkgs.outputs.list }}
+        run: |
+          for p in $PKGS; do
+            find "./$p/home" -type f ! -name .DS_Store | while IFS= read -r f; do
+              t="$HOME/${f#./"$p"/home/}"
+              if [ -e "$t" ] && [ ! -L "$t" ]; then mv "$t" "$t.pre-v2" && echo "moved aside: $t"; fi
+            done
+          done
+      - run: ./bootstrap.sh
+      - run: ./install.sh ${{ steps.pkgs.outputs.list }}
+      - run: _gate/zsh-smoke.sh
   # A real install, twice, then verify. The runner is not a fresh machine: its image
   # already has Homebrew and many formulas, and its own dotfiles are moved aside first,
   # so this does not replace _gate/fresh-account.md (R14). Too slow (casks) for every
@@ -49,9 +75,5 @@ jobs:
           fi
           echo "second install changed nothing in ${#paths[@]} v2 paths, mise installs, Cellar or Caskroom"
       - run: ./verify.sh
-      # verify.sh proves files are linked, not that they load: a compinit abort or plugin
-      # error only shows when an interactive shell starts. script(1) gives zsh a TTY.
-      - name: Interactive zsh starts without output
-        run: |
-          out="$(script -q /dev/null zsh -i -c exit </dev/null 2>&1 | tr -d '\b\r' | sed 's/\^D//g')"
-          if [ -n "$out" ]; then echo "$out"; exit 1; fi
+      # verify.sh proves files are linked, not that they load.
+      - run: _gate/zsh-smoke.sh

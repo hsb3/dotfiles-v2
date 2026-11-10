@@ -31,6 +31,24 @@ Nothing in `$HOME` is overwritten. If a file is in the way, the package fails an
 lists the conflict; move the file aside and rerun. `install.sh` refuses to run while a
 `~/.stowrc` exists, since an `--adopt` there would move files out of `$HOME`.
 
+## Move from an earlier dotfiles setup
+
+On a Mac whose `$HOME` already links into another dotfiles checkout, every package that
+links the same file fails with `conflicts with existing ~/...`. Before `./install.sh`,
+remove those links (only the links: the files stay in the earlier checkout):
+
+```sh
+old=...   # the earlier checkout's path
+old="$(cd "$old" && pwd -P)"
+find "$HOME" -maxdepth 6 -path "$HOME/Library" -prune -o -type l -print | while IFS= read -r l; do
+  case "$(readlink -f "$l")" in "$old"/*) rm "$l" && echo "unlinked $l" ;; esac
+done
+```
+
+If this repo goes where the earlier checkout was, move that checkout aside first
+(`mv "$old" "$old-v1"`), then follow "Set up a Mac". A real file in the way (not a
+link) still fails the package; move it aside and rerun.
+
 ## Layout
 
 ```
@@ -62,7 +80,10 @@ customize it. R18 catches a missing name; a wrong description is caught only in 
 
 `make check` is the only gate. It runs as the pre-commit hook (`bootstrap.sh` sets
 `core.hooksPath`) and in CI. Its tools come from `_gate/Brewfile`:
-`brew bundle --file=_gate/Brewfile`. `make fmt` reformats scripts. If a check looks
+`brew bundle --file=_gate/Brewfile`. `make fmt` reformats scripts. CI also runs the
+`shell` job on each PR: it installs every package that ships zsh setup and runs
+`_gate/zsh-smoke.sh`, which fails if an interactive zsh prints anything at startup; run
+that script locally to test the shell you have installed. If a check looks
 impossible to satisfy, report it rather than loosening it.
 
 A problem found by hand (a gotcha) is a defect in this process, and its PR fixes it twice:
@@ -89,7 +110,7 @@ Violations print as `R<n> <path>: <reason>`.
 | R4 | Line 1 `#!/bin/bash`; line 2 a `# ` purpose comment; line 3 `# requires: <cmd> ...` or `# requires: none`. |
 | R5 | `home/` is linked only by `stow --dir="$here" --target="$HOME" --no-folding --ignore='\.DS_Store' home`; no `--adopt`, `--override` or `ln -s`. |
 | R6 | `bash -n`, shellcheck at style severity with no disable directives, and shfmt (`-i 2 -ci`) pass. |
-| R7 | Nothing matches `_gate/forbidden.txt`: agent and tracker names, machine-tied paths, the earlier dotfiles checkout. |
+| R7 | Nothing matches `_gate/forbidden.txt`: agent and tracker names, machine-tied paths, the path of any dotfiles checkout. |
 | R8 | Scripts locate themselves with `here="$(cd "$(dirname "$0")" && pwd)"`; no `..` segment, no `--show-toplevel`. |
 | R9 | gitleaks finds nothing. |
 | R10 | Each structural rule has a mutation fixture in `_gate/fixtures/` that the gate catches. |

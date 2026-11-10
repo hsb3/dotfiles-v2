@@ -10,6 +10,6 @@ anthropic
 openai
 # Machine-tied paths.
 /Users/
-# The earlier dotfiles checkout.
-~/dotfiles([/[:space:]"']|$)
-\$HOME/dotfiles([/[:space:]"']|$)
+# A checkout's location: it differs by machine (this repo on one, the earlier setup on
+# another), so nothing may name one; scripts locate themselves (R8).
+(~|\$HOME|\$\{HOME\})/dotfiles(-v[0-9]+)?([/[:space:]"']|$)
