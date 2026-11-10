@@ -1,6 +1,6 @@
 #!/bin/bash
 # check.sh: the repo's quality gate; `make check` runs every step.
-# requires: shellcheck shfmt gitleaks stow
+# requires: shellcheck shfmt gitleaks stow git
 
 missing() {
   echo "missing prerequisite: $1 ($2)" >&2
@@ -10,12 +10,13 @@ command -v shellcheck >/dev/null || missing shellcheck "see _gate/Brewfile"
 command -v shfmt >/dev/null || missing shfmt "see _gate/Brewfile"
 command -v gitleaks >/dev/null || missing gitleaks "see _gate/Brewfile"
 command -v stow >/dev/null || missing stow "see _gate/Brewfile"
+command -v git >/dev/null || missing git "install the Command Line Tools: xcode-select --install"
 
 gate="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$gate/.." && pwd)"
 count=0
 all_steps="structure shell references secrets entrypoints selftest"
-root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md LICENSE .gitignore .githooks .github _gate .git .DS_Store NOTES.md "
+root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md LICENSE .gitignore .githooks .github _gate .DS_Store "
 canon_stow="stow --dir=\"\$here\" --target=\"\$HOME\" --no-folding --ignore='\\.DS_Store' home"
 missing_fn="$(printf '%s\n' 'missing() {' "  echo \"missing prerequisite: \$1 (\$2)\" >&2" '  exit 3' '}')"
 self_locate="here=\"\$(cd \"\$(dirname \"\$0\")\" && pwd)\""
@@ -40,6 +41,22 @@ scripts() {
       *) [ "$(head -c 2 "$f")" = "#!" ] && echo "$f" ;;
     esac
   done
+}
+
+# Top-level names R2 and R3 judge. In a git checkout, only tracked or staged paths: those
+# rules keep the published layout clean, and untracked local files (notes, scratch) are
+# never published or installed, so failing on them would only push people to delete or
+# allowlist them. Outside git (the self-test's fixture copies), everything on disk.
+root_entries() {
+  if [ -e "$root/.git" ]; then
+    git -C "$root" ls-files -z | tr '\0' '\n' | sed 's|/.*||' | sort -u | while IFS= read -r n; do
+      [ -e "$root/$n" ] || [ -L "$root/$n" ] && echo "$n"
+    done
+  else
+    for e in "$root"/* "$root"/.[!.]*; do
+      [ -e "$e" ] || [ -L "$e" ] && basename "$e"
+    done
+  fi
 }
 
 list_packages() {
@@ -83,23 +100,21 @@ step_structure() {
   [ -f "$root/packages" ] || violation R2 "$root/packages" "missing"
   for p in $(sort <<<"$pkgs" | uniq -d); do violation R2 "$root/packages" "duplicate: $p"; done
   for p in $pkgs; do [ -d "$root/$p" ] || violation R2 "$root/packages" "listed but no directory: $p"; done
-  for d in "$root"/*/; do
-    [ -d "$d" ] || continue
-    n="$(basename "$d")"
-    case "$n" in _*) continue ;; esac
+  while IFS= read -r n; do
+    [ -d "$root/$n" ] || continue
+    case "$n" in _* | .*) continue ;; esac
     grep -qx -- "$n" <<<"$pkgs" || violation R2 "$root/$n" "directory not listed in packages"
-  done
+  done < <(root_entries)
 
   # R3: root allowlist (non-underscore directories are packages, judged by R2)
-  for e in "$root"/* "$root"/.[!.]*; do
-    [ -e "$e" ] || [ -L "$e" ] || continue
-    n="$(basename "$e")"
+  while IFS= read -r n; do
+    e="$root/$n"
     case "$root_allow" in *" $n "*) continue ;; esac
     if [ -d "$e" ]; then
       case "$n" in _* | .*) ;; *) continue ;; esac
     fi
     violation R3 "$e" "not allowed at the repo root"
-  done
+  done < <(root_entries)
 
   [ -f "$root/verify.sh" ] && check_readonly "$root/verify.sh"
 
@@ -340,6 +355,14 @@ step_selftest() {
     [ "$got" = "$want " ] || violation R10 "$m" "expected only $want, got: ${got:-nothing}"
     covered="$covered$want "
   done
+  # R3 in a git checkout: an untracked root file passes; the same file staged fails.
+  cp -R "$base" "$tmp/g"
+  git -C "$tmp/g" init -q && git -C "$tmp/g" add -A && touch "$tmp/g/notes.txt"
+  "$gate/check.sh" --root "$tmp/g" structure >/dev/null 2>&1 ||
+    violation R10 "$base" "an untracked root file fails the gate in a git checkout"
+  git -C "$tmp/g" add notes.txt
+  "$gate/check.sh" --root "$tmp/g" structure 2>/dev/null | grep -q '^R3 notes.txt' ||
+    violation R10 "$base" "a staged stray root file passes the gate in a git checkout"
   rm -rf "$tmp"
   for r in R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R15 R17 R18; do
     case "$covered" in *" $r "*) ;; *) violation R10 "$gate/fixtures" "no fixture for $r" ;; esac

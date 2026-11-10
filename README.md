@@ -65,6 +65,14 @@ customize it. R18 catches a missing name; a wrong description is caught only in 
 `brew bundle --file=_gate/Brewfile`. `make fmt` reformats scripts. If a check looks
 impossible to satisfy, report it rather than loosening it.
 
+A problem found by hand (a gotcha) is a defect in this process, and its PR fixes it twice:
+prose in this README or the package README, and a check in the gate or in CI that would
+have caught it. A rule that blocks something harmless gets fixed to match its purpose,
+not given an exception. Every PR answers two lines from `.github/pull_request_template.md`,
+which `.github/workflows/pr.yml` requires: `Gate/CI:` (the check this PR adds or changes,
+or why its changes cannot fail in a way the gate and CI miss) and `Docs:` (the READMEs
+updated, or why none needed to change).
+
 Every script is Bash 3.2 (the stock `/bin/bash`), so the install path never depends on
 a tool the repo installs: no bash-4 features, and no other runtime. Bootstrap installs
 only managers (Homebrew, Stow, mise); a package's tools come from its `Brewfile` or mise.
@@ -77,7 +85,7 @@ Violations print as `R<n> <path>: <reason>`.
 |---|---|
 | R1 | A package holds `README.md`, executable `install.sh` and `verify.sh`, optional `Brewfile` and `home/`, nothing else. |
 | R2 | `packages` names exactly the top-level directories not starting with `_` or `.`, once each. |
-| R3 | The root holds only the entrypoints, `packages`, `Makefile`, `README.md`, `LICENSE`, `.gitignore`, `.githooks/`, `.github/`, `_gate/`, packages, and an untracked `NOTES.md`. |
+| R3 | The root holds only the entrypoints, `packages`, `Makefile`, `README.md`, `LICENSE`, `.gitignore`, `.githooks/`, `.github/`, `_gate/` and packages. R2 and R3 judge tracked and staged paths only: untracked local files (such as a gitignored `NOTES.md`) are never published, so they pass. |
 | R4 | Line 1 `#!/bin/bash`; line 2 a `# ` purpose comment; line 3 `# requires: <cmd> ...` or `# requires: none`. |
 | R5 | `home/` is linked only by `stow --dir="$here" --target="$HOME" --no-folding --ignore='\.DS_Store' home`; no `--adopt`, `--override` or `ln -s`. |
 | R6 | `bash -n`, shellcheck at style severity with no disable directives, and shfmt (`-i 2 -ci`) pass. |
