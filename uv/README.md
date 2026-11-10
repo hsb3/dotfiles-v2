@@ -5,6 +5,16 @@
 uv, the Python package and project manager, installed and versioned by mise (from the
 mise package). Tools installed with `uv tool install` land in `~/.local/bin`.
 
+## Why
+
+Python versions, venvs, dependencies and CLI tools in one fast tool. mise pins its version.
+
+### Alternatives Considered
+
+- pip with venv: slow, with no lockfile.
+- poetry or pipenv: slower, and cover only part of what uv does.
+- Homebrew: one global version instead of mise's pin.
+
 ## Install
 
 `./install.sh` declares `uv = "latest"` in mise's global config with

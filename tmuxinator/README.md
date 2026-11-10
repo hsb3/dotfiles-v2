@@ -6,6 +6,15 @@ tmuxinator, which starts tmux sessions from YAML project files. Homebrew also in
 its zsh completion and tmux. No project files are linked: they describe local
 checkouts, so they stay machine-local.
 
+## Why
+
+Starts a whole tmux layout for a project with one command.
+
+### Alternatives Considered
+
+- tmuxp: the same idea, written in Python.
+- Shell scripts calling tmux: more code to maintain for each project.
+
 ## Install
 
 `./install.sh` installs `tmuxinator`. Nothing is linked into `$HOME`.

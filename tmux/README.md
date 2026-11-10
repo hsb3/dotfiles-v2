@@ -6,6 +6,15 @@ The tmux terminal multiplexer, with its default config (prefix `C-b`). No config
 linked. Truecolor works inside tmux under Ghostty because tmux reads the outer
 terminal's `xterm-ghostty` terminfo, which declares it.
 
+## Why
+
+Keeps sessions alive when the terminal closes, and splits panes the same way on every machine and over SSH.
+
+### Alternatives Considered
+
+- Zellij: friendlier, but less widely available on remote hosts.
+- Ghostty's own splits: lost when the window closes, and not available over SSH.
+
 ## Install
 
 `./install.sh` installs `tmux`. Nothing is linked into `$HOME`.

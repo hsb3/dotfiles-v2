@@ -23,6 +23,16 @@ duplicates dropped. Lines over 200 characters stay in the current session only.
 directory, where `uv tool install` writes) and deduplicates `PATH`. The directory is not
 created or filled by this repo.
 
+## Why
+
+macOS's default login shell, so nothing to install or `chsh`. A `conf.d` directory keeps each package's shell setup inside that package.
+
+### Alternatives Considered
+
+- bash: macOS ships 3.2; a newer one would mean installing and `chsh`.
+- fish: better defaults, but not POSIX-like, so copied snippets and scripts break.
+- oh-my-zsh or zinit: a framework for what a few `source` lines do; v1 used zinit.
+
 ## Install
 
 `./install.sh` links the three files and `functions.zsh`. No Homebrew dependency: zsh ships with macOS.

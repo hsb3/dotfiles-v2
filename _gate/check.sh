@@ -15,7 +15,7 @@ gate="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$gate/.." && pwd)"
 count=0
 all_steps="structure shell references secrets entrypoints selftest"
-root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md LICENSE .gitignore .githooks .github _gate .git .DS_Store "
+root_allow=" bootstrap.sh install.sh verify.sh packages Makefile README.md LICENSE .gitignore .githooks .github _gate .git .DS_Store NOTES.md "
 canon_stow="stow --dir=\"\$here\" --target=\"\$HOME\" --no-folding --ignore='\\.DS_Store' home"
 missing_fn="$(printf '%s\n' 'missing() {' "  echo \"missing prerequisite: \$1 (\$2)\" >&2" '  exit 3' '}')"
 self_locate="here=\"\$(cd \"\$(dirname \"\$0\")\" && pwd)\""
@@ -126,8 +126,20 @@ step_structure() {
       n=$(wc -l <"$d/README.md" | tr -d ' ')
       [ "$n" -le 60 ] || violation R12 "$d/README.md" "$n lines (max 60)"
       h=$(awk '/^```/ { fence = !fence; next } !fence && /^## / { sub(/^## /, ""); printf "%s ", $0 }' "$d/README.md")
-      [ "$h" = "What Install Customize Verify " ] ||
-        violation R12 "$d/README.md" "## headings must be What, Install, Customize, Verify (found: ${h% })"
+      [ "$h" = "What Why Install Customize Verify " ] ||
+        violation R12 "$d/README.md" "## headings must be What, Why, Install, Customize, Verify (found: ${h% })"
+      awk '/^## /{ w = ($0 == "## Why") } w && $0 == "### Alternatives Considered" { f = 1 } END { exit !f }' "$d/README.md" ||
+        violation R12 "$d/README.md" "## Why needs a ### Alternatives Considered subsection"
+    fi
+
+    # R18: the README is the package's site page, so it names everything the package installs or links.
+    if [ -f "$d/README.md" ]; then
+      [ -f "$d/Brewfile" ] && while IFS= read -r m; do
+        grep -qF -- "${m##*/}" "$d/README.md" || violation R18 "$d/README.md" "does not name Brewfile entry ${m##*/}"
+      done < <(sed -nE 's/^[[:space:]]*(brew|cask)[[:space:]]+"([^"]+)".*/\2/p' "$d/Brewfile")
+      [ -d "$d/home" ] && while IFS= read -r f; do
+        grep -qF -- "$(basename "$f")" "$d/README.md" || violation R18 "$d/README.md" "does not name linked file $(basename "$f")"
+      done < <(find "$d/home" -type f ! -name .DS_Store)
     fi
 
     # R5: linking only through the canonical stow call
@@ -329,7 +341,7 @@ step_selftest() {
     covered="$covered$want "
   done
   rm -rf "$tmp"
-  for r in R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R15 R17; do
+  for r in R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R15 R17 R18; do
     case "$covered" in *" $r "*) ;; *) violation R10 "$gate/fixtures" "no fixture for $r" ;; esac
   done
 }

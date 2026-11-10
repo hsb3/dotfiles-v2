@@ -7,6 +7,15 @@ Helix stays the editor in `EDITOR`. No settings are linked: Zed rewrites its own
 `~/.config/zed/settings.json` from the Settings Editor and theme picker, so a linked file
 would be edited inside this repo.
 
+## Why
+
+A fast GUI editor with built-in LSP and collaboration, for work that is easier outside the terminal.
+
+### Alternatives Considered
+
+- VS Code: heavier, and settings would need syncing.
+- Cursor: a VS Code fork with the same weight.
+
 ## Install
 
 `./install.sh` installs the `zed` cask. Nothing is linked into `$HOME`.

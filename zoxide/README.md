@@ -10,6 +10,15 @@ loaded from `~/.config/zsh/conf.d/zoxide.zsh` (loaded by the zsh package):
 
 `cd` itself is unchanged.
 
+## Why
+
+Jump to frequent directories by a fragment of their name.
+
+### Alternatives Considered
+
+- autojump, z.sh: older, slower, less maintained.
+- `cd` with `CDPATH`: only covers fixed parent directories.
+
 ## Install
 
 `./install.sh` installs `zoxide` and links the hook.

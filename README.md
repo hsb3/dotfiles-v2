@@ -36,7 +36,7 @@ lists the conflict; move the file aside and rerun. `install.sh` refuses to run w
 ```
 bootstrap.sh install.sh verify.sh   entrypoints
 packages                             install order
-<pkg>/README.md                      what, install, customize, verify
+<pkg>/README.md                      what, why, install, customize, verify
 <pkg>/Brewfile                       the package's Homebrew deps (optional)
 <pkg>/install.sh  <pkg>/verify.sh    the package's own scripts
 <pkg>/home/                          mirrors $HOME; linked with Stow
@@ -52,6 +52,11 @@ that needs shell setup ships its own file there.
 2. Add `<pkg>` to `packages`.
 3. Add any new command it installs to `_gate/managed-commands.txt`.
 4. `make check` until green.
+
+A package's README is its page on the site (https://hsb3.github.io/dotfiles-v2/), published
+as-is on each push to `main`; there is no separate docs copy to update. So any change to a
+package updates its README in the same commit: what it installs, what it links, how to
+customize it. R18 catches a missing name; a wrong description is caught only in review.
 
 ## The gate
 
@@ -72,7 +77,7 @@ Violations print as `R<n> <path>: <reason>`.
 |---|---|
 | R1 | A package holds `README.md`, executable `install.sh` and `verify.sh`, optional `Brewfile` and `home/`, nothing else. |
 | R2 | `packages` names exactly the top-level directories not starting with `_` or `.`, once each. |
-| R3 | The root holds only the entrypoints, `packages`, `Makefile`, `README.md`, `LICENSE`, `.gitignore`, `.githooks/`, `.github/`, `_gate/` and packages. |
+| R3 | The root holds only the entrypoints, `packages`, `Makefile`, `README.md`, `LICENSE`, `.gitignore`, `.githooks/`, `.github/`, `_gate/`, packages, and an untracked `NOTES.md`. |
 | R4 | Line 1 `#!/bin/bash`; line 2 a `# ` purpose comment; line 3 `# requires: <cmd> ...` or `# requires: none`. |
 | R5 | `home/` is linked only by `stow --dir="$here" --target="$HOME" --no-folding --ignore='\.DS_Store' home`; no `--adopt`, `--override` or `ln -s`. |
 | R6 | `bash -n`, shellcheck at style severity with no disable directives, and shfmt (`-i 2 -ci`) pass. |
@@ -81,10 +86,11 @@ Violations print as `R<n> <path>: <reason>`.
 | R9 | gitleaks finds nothing. |
 | R10 | Each structural rule has a mutation fixture in `_gate/fixtures/` that the gate catches. |
 | R11 | `verify.sh` changes nothing: no installs, links, file writes or `defaults write`. |
-| R12 | A package README is at most 60 lines with `##` What, Install, Customize, Verify, in order. |
+| R12 | A package README is at most 60 lines with `##` What, Why, Install, Customize, Verify, in order, and `### Alternatives Considered` under Why. |
 | R15 | Every non-stock command is declared on the `# requires:` line and checked with `command -v <cmd> >/dev/null \|\| missing <cmd> "<hint>"` before first use, using the `missing()` function copied from an existing script. Commands a package installs go in `_gate/managed-commands.txt`. |
 | R16 | The root entrypoints keep their output and exit codes (above) for conflicts, clean and repeat installs, a missing prerequisite and usage errors. |
 | R17 | `brew bundle check` runs as `HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade`. |
+| R18 | A package README names every `Brewfile` entry and every file under `home/` (by basename). |
 
 Not machine-checked: an inline comment states a non-obvious why, never what the next
 line does; a second `install.sh` changes nothing (proven by the fresh-account procedure).

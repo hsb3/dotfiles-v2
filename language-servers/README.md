@@ -13,7 +13,11 @@ speaks LSP or DAP: Helix (configured in the helix package) or a coding agent.
 | YAML, TOML, JSON, HTML, CSS, Markdown, Bash, Dockerfile, compose | yaml-language-server, taplo, vscode-langservers-extracted, marksman, bash-language-server, dockerfile-language-server, docker-compose-langserver | prettier, taplo, shfmt | |
 | SQL (Postgres) | postgres-language-server | | |
 
-Why these (chosen 2026-11-08):
+## Why
+
+Shared by every LSP/DAP client (Helix, Zed, coding agents), so each language is set up once. Each tool was chosen 2026-11-08; the reasons are below.
+
+### Alternatives Considered
 
 - TypeScript 7's built-in server over typescript-language-server: TS 7 is the native Go
   port and speaks LSP itself (reported 17.5s to 1.3s to first error on VS Code's own

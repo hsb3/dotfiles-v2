@@ -2,8 +2,18 @@
 
 ## What
 
-The Ghostty terminal and the JetBrains Mono Nerd Font, with a minimal config in
+The Ghostty terminal and the JetBrains Mono Nerd Font (`font-jetbrains-mono-nerd-font`), with a minimal config in
 `~/.config/ghostty/config`.
+
+## Why
+
+A fast, native macOS terminal with sensible defaults and a plain-text config.
+
+### Alternatives Considered
+
+- iTerm2: config lives in a plist, hard to keep in git.
+- WezTerm, Kitty: capable, but not native macOS apps, and need more config for the same result.
+- Terminal.app: no truecolor.
 
 ## Install
 
