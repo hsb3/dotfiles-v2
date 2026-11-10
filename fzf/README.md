@@ -16,6 +16,15 @@ directories for `Alt-C`, hidden files included, `.git` excluded, symlinks follow
 command from fzf's README). fd also skips anything `.gitignore` ignores, which fzf's
 built-in walker does not. Without fd, fzf keeps its built-in walker.
 
+## Why
+
+Fuzzy search over history, files and directories from a few keys; other tools (fzf-tab, zoxide) build on it.
+
+### Alternatives Considered
+
+- skim: a Rust port with fewer integrations.
+- Plain `Ctrl-R`: exact-substring matching only.
+
 ## Install
 
 `./install.sh` installs `fzf` and links the hook. fd is not a dependency; install the

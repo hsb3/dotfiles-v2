@@ -9,6 +9,16 @@ settings live in `~/.config/git/delta.gitconfig`:
 - `delta.navigate` jumps between files with `n`/`N`;
 - `delta.syntax-theme = TwoDark` (the Atom One Dark port, matching bat).
 
+## Why
+
+Readable diffs (syntax highlighting, side-by-side, line numbers) in git and lazygit.
+
+### Alternatives Considered
+
+- diff-so-fancy: no syntax highlighting.
+- git's default pager: plain colours only.
+- difftastic: structural diffs, but cannot render `add -p`.
+
 ## Install
 
 `./install.sh` installs `git-delta`, links the file, and adds one line to `~/.gitconfig`:

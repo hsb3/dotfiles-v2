@@ -1,0 +1,19 @@
+name: pr
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+permissions: {}
+jobs:
+  checks-answered:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR body answers Gate/CI and Docs
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          for k in Gate/CI Docs; do
+            if ! grep -Eq "^$k: *[^<[:space:]]" <<<"$BODY"; then
+              echo "PR body needs an answered '$k:' line (see .github/pull_request_template.md)"
+              exit 1
+            fi
+          done

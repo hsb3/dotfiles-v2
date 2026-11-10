@@ -5,6 +5,16 @@
 The lazygit terminal UI for git, with its default config. No config file is linked:
 lazygit picks its Helix editor preset from `EDITOR=hx` (set by the helix package).
 
+## Why
+
+Staging hunks, rebasing and resolving conflicts are faster in a keyboard UI than as git commands.
+
+### Alternatives Considered
+
+- tig: browses history but does little else.
+- gitui: faster, fewer features.
+- A GUI client: leaves the terminal.
+
 ## Install
 
 `./install.sh` installs `lazygit`. Nothing is linked into `$HOME`.

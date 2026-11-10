@@ -5,6 +5,15 @@
 The GitHub CLI, set to clone and push over SSH (`git_protocol ssh`). Everything else is
 gh's default; gh opens `$EDITOR` (Helix) for text.
 
+## Why
+
+PRs, issues, CI runs and the API from the terminal, logged in once.
+
+### Alternatives Considered
+
+- hub: deprecated in favour of gh.
+- The web UI: leaves the terminal.
+
 ## Install
 
 `./install.sh` installs `gh`, then runs `gh config set git_protocol ssh` only if the

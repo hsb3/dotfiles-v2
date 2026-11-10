@@ -10,14 +10,28 @@ its shell setup with it. This package ships `functions.zsh`: `mkcd <dir>`, `extr
 <archive>` (tar, zip, gz, bz2, xz), `port <n>` (what holds a port) and `ports` (every
 listener), built on stock macOS tools.
 
-Before `compinit`, `.zshrc` adds two completion directories to `fpath` when they exist:
+Before `compinit`, `.zshrc` adds completion directories to `fpath` when they exist:
 Homebrew's `share/zsh/site-functions` (so nested non-login shells complete Homebrew tools
-too), and `~/.local/share/zsh/site-functions`, a real directory where the uv, bun and
-pnpm packages generate their completions.
+too), `opt/zsh-completions/share/zsh-completions` (zsh-plugins package), and `~/.local/share/zsh/site-functions`,
+a real directory where the uv, bun and pnpm packages generate their completions. Completion
+is case-insensitive with an arrow-key menu.
+
+History keeps 1,000,000 timestamped lines in `~/.zsh_history`, shared across sessions, with
+duplicates dropped. Lines over 200 characters stay in the current session only.
 
 `.zprofile` puts Homebrew on `PATH`, then prepends `~/.local/bin` (the XDG user binary
 directory, where `uv tool install` writes) and deduplicates `PATH`. The directory is not
 created or filled by this repo.
+
+## Why
+
+macOS's default login shell, so nothing to install or `chsh`. A `conf.d` directory keeps each package's shell setup inside that package.
+
+### Alternatives Considered
+
+- bash: macOS ships 3.2; a newer one would mean installing and `chsh`.
+- fish: better defaults, but not POSIX-like, so copied snippets and scripts break.
+- oh-my-zsh or zinit: a framework for what a few `source` lines do; v1 used zinit.
 
 ## Install
 

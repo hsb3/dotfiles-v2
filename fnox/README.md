@@ -7,6 +7,16 @@ live in the macOS Keychain through fnox's `keychain` provider; the config holds 
 names. There is no shell hook and no `fnox activate`: secrets reach a command only through
 `fnox exec`, so they never sit in the shell's environment.
 
+## Why
+
+Secrets live in the Keychain and reach only the command that needs them; the config in git holds names, never values.
+
+### Alternatives Considered
+
+- `.env` files: plaintext on disk.
+- 1Password CLI: needs an account and a desktop app.
+- `security` calls in shell rc files: secrets end up in every process's environment.
+
 ## Install
 
 `./install.sh` declares `fnox = "latest"` in mise's global config (only when no global

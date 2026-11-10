@@ -13,6 +13,7 @@ tmuxinator
 ripgrep
 fd
 fzf
+zsh-plugins
 bat
 eza
 killport

@@ -49,3 +49,9 @@ jobs:
           fi
           echo "second install changed nothing in ${#paths[@]} v2 paths, mise installs, Cellar or Caskroom"
       - run: ./verify.sh
+      # verify.sh proves files are linked, not that they load: a compinit abort or plugin
+      # error only shows when an interactive shell starts. script(1) gives zsh a TTY.
+      - name: Interactive zsh starts without output
+        run: |
+          out="$(script -q /dev/null zsh -i -c exit </dev/null 2>&1 | tr -d '\b\r' | sed 's/\^D//g')"
+          if [ -n "$out" ]; then echo "$out"; exit 1; fi

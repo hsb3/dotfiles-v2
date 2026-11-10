@@ -5,6 +5,15 @@
 The btop resource monitor. Config in `~/.config/btop/btop.conf`: the `onedark` theme
 (bundled with btop) and `save_config_on_exit = false`, everything else btop's default.
 
+## Why
+
+Shows CPU, memory, disks, network and processes on one screen, with mouse support and themes.
+
+### Alternatives Considered
+
+- htop: processes only, no disk or network graphs.
+- Activity Monitor: not in the terminal.
+
 ## Install
 
 `./install.sh` installs `btop` and links the config.

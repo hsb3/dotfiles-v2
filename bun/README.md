@@ -7,6 +7,15 @@ mise (from the mise package). `~/.config/zsh/conf.d/bun.zsh` appends `~/.bun/bin
 `bun add -g` links executables (`install.globalBinDir`), to the end of `PATH` (even before it
 exists), so global packages never shadow Homebrew or `~/.local/bin`.
 
+## Why
+
+A fast JavaScript runtime, package manager and test runner in one binary. mise pins its version.
+
+### Alternatives Considered
+
+- Node with npm: slower installs; Node is still available through mise when a project needs it.
+- Homebrew's bun: one global version instead of mise's pin.
+
 ## Install
 
 `./install.sh` declares `bun = "latest"` in mise's global config with

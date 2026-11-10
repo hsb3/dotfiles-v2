@@ -5,6 +5,14 @@
 fd, a fast `find` alternative that respects `.gitignore`, with its default settings. fd
 has no config file, so nothing is linked.
 
+## Why
+
+A simpler, faster `find` that respects `.gitignore`; it also feeds fzf.
+
+### Alternatives Considered
+
+- find: verbose syntax, no ignore rules.
+
 ## Install
 
 `./install.sh` installs `fd`. Nothing is linked into `$HOME`.

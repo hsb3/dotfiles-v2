@@ -6,6 +6,16 @@ mise, the runtime version manager. This package only activates it in zsh via
 `~/.config/zsh/conf.d/mise.zsh`. `bootstrap.sh` also installs mise, because it is a
 manager other packages may rely on.
 
+## Why
+
+One manager for every language runtime and many CLIs, pinned per project, and fast because it uses shims.
+
+### Alternatives Considered
+
+- asdf: same model, slower, and needs a plugin per tool.
+- nvm, pyenv and the like: one tool per language.
+- Homebrew alone: one version per tool, upgraded globally.
+
 ## Install
 
 `./install.sh` ensures `mise` is installed and links the zsh hook.

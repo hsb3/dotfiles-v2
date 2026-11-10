@@ -7,6 +7,15 @@ package). `~/.config/zsh/conf.d/pnpm.zsh` exports `PNPM_HOME=~/Library/pnpm` (pn
 macOS default) and appends `$PNPM_HOME/bin`, where `pnpm add -g` links executables, to
 the end of `PATH`, so global packages never shadow Homebrew or `~/.local/bin`.
 
+## Why
+
+For Node projects that use pnpm lockfiles: fast, and saves disk with a shared content store. mise pins its version.
+
+### Alternatives Considered
+
+- npm or yarn: slower, and duplicate packages on disk.
+- corepack: being removed from Node.
+
 ## Install
 
 `./install.sh` declares `pnpm = "latest"` in mise's global config with
