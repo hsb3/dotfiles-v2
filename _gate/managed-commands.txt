@@ -49,3 +49,4 @@ vscode-json-language-server
 postgres-language-server
 debugpy-adapter
 js-debug-dap
+code
