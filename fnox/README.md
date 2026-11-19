@@ -19,15 +19,14 @@ Secrets live in the Keychain and reach only the command that needs them; the con
 
 ## Install
 
-`./install.sh` declares `fnox = "latest"` in mise's global config (only when no global
-config declares it), installs it, writes its zsh completion to
-`~/.local/share/zsh/site-functions/_fnox`, and runs
-`fnox provider add keychain keychain --global` when `~/.config/fnox/config.toml` has no
-`keychain` provider, then makes it the default (`default_provider = "keychain"`, the one
-line it writes itself: fnox has no command for it). Without a default, `fnox set` with no
-`--provider` writes the value into the config in plain text. That file is real and
-untracked: fnox writes it, and rewrites it on every `fnox set --global`. None of this
-touches the Keychain.
+`./install.sh` declares `fnox = "latest"` in mise's global config (only when none
+declares it), installs it, writes its zsh completion to
+`~/.local/share/zsh/site-functions/_fnox`, adds a global `keychain` provider if missing,
+and adds two top-level lines fnox has no command for: `default_provider = "keychain"`
+(else `fnox set` without `--provider` stores the value in the config in plain text) and
+`if_missing = "error"` (else a secret the Keychain refuses is skipped with a warning, so
+the failure looks like a bad key). `~/.config/fnox/config.toml` is real and untracked:
+fnox rewrites it on every `fnox set --global`. None of this touches the Keychain.
 
 ## Customize
 
@@ -40,10 +39,13 @@ touches the Keychain.
   bill against it). fnox options go before `--`.
 - Keychain prompts: macOS may ask to allow fnox to read each item, one at a time.
   "Always Allow" covers the current binary; a new fnox version from mise can ask again.
+- Only the macOS login (GUI) session can read the Keychain. A shell started over SSH, or
+  by a terminal server that was started over SSH, gets `User interaction is not allowed`
+  (`launchctl managername` prints `Background` there, `Aqua` in a GUI terminal); run fnox
+  from a GUI terminal, or restart that server from one.
 - Never store anything named `__fnox_test__`: `fnox provider test keychain` overwrites
   and then deletes an item with that name.
-- Items stored by other tools (or under another service name) are not read; enter each
-  value again with `fnox set`.
+- Items stored by other tools or under another service are not read: `fnox set` again.
 - Switch to 1Password later by replacing the `[providers.keychain]` block in
   `~/.config/fnox/config.toml` with a `type = "1password"` one named `keychain`
   (secrets refer to the provider by name). 1Password is read-only to fnox, so the items
@@ -53,6 +55,6 @@ touches the Keychain.
 ## Verify
 
 `./verify.sh` checks that a global mise config declares fnox, that `mise which fnox`
-finds it, that the completion file exists, that `fnox provider list` on the global
-config shows `keychain`, and that `default_provider` is `keychain`. Both read only the
+finds it, that the completion file exists, and that the global config has the `keychain`
+provider, `default_provider = "keychain"` and `if_missing = "error"`. It reads only the
 config file.

@@ -1,5 +1,5 @@
 #!/bin/bash
-# verify.sh: check fnox is declared in mise's global config, installed, its zsh completion generated, and its keychain provider configured as the default (read-only).
+# verify.sh: check fnox is declared in mise's global config, installed, its zsh completion generated, and its keychain provider configured as the default with missing secrets fatal (read-only).
 # requires: mise
 set -uo pipefail
 
@@ -30,6 +30,10 @@ if ! MISE_OFFLINE=1 mise exec fnox -- fnox -c "$HOME/.config/fnox/config.toml" p
 fi
 if ! grep -q '^default_provider *= *"keychain"' "$HOME/.config/fnox/config.toml" 2>/dev/null; then
   echo "keychain is not fnox's default provider, so fnox set without --provider stores plain text: run $here/install.sh" >&2
+  status=1
+fi
+if ! grep -qx 'if_missing *= *"error"' "$HOME/.config/fnox/config.toml" 2>/dev/null; then
+  echo "fnox runs a command without a secret it cannot read (if_missing is not \"error\"): run $here/install.sh" >&2
   status=1
 fi
 exit "$status"

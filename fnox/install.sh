@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh: declare fnox in mise's global config if it is not declared yet, install it, generate its zsh completion, and add a global keychain provider as the default.
+# install.sh: declare fnox in mise's global config if it is not declared yet, install it, generate its zsh completion, and add a global keychain provider as the default, failing when a secret cannot be read.
 # requires: mise
 set -euo pipefail
 
@@ -29,9 +29,15 @@ cfg="$HOME/.config/fnox/config.toml"
 if ! { [ -f "$cfg" ] && MISE_OFFLINE=1 mise exec fnox -- fnox -c "$cfg" provider list | grep -x keychain >/dev/null; }; then
   FNOX_CONFIG_DIR="$HOME/.config/fnox" MISE_OFFLINE=1 mise exec fnox -- fnox provider add keychain keychain --global
 fi
-# Without a default provider, `fnox set` with no --provider writes the value into this
-# file in plain text. fnox has no command that sets it, so the line is added here.
-if ! grep -q '^default_provider *= *"keychain"' "$cfg"; then
-  rest="$(grep -v '^default_provider *=' "$cfg" || true)"
-  printf 'default_provider = "keychain"\n%s\n' "$rest" >"$cfg"
-fi
+# fnox has no command for these top-level settings, so the lines are added here.
+# default_provider: without it, `fnox set` with no --provider writes the value into this
+# file in plain text. if_missing: without it, a secret the Keychain refuses (a locked
+# keychain, a session that cannot prompt) is skipped with a warning and the command runs
+# without it, so the failure looks like a bad key.
+for setting in 'default_provider = "keychain"' 'if_missing = "error"'; do
+  key="${setting%% *}"
+  if ! grep -qx "$key *= *${setting#* = }" "$cfg"; then
+    rest="$(grep -v "^$key *=" "$cfg" || true)"
+    printf '%s\n%s\n' "$setting" "$rest" >"$cfg"
+  fi
+done
