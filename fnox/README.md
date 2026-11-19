@@ -23,16 +23,21 @@ Secrets live in the Keychain and reach only the command that needs them; the con
 config declares it), installs it, writes its zsh completion to
 `~/.local/share/zsh/site-functions/_fnox`, and runs
 `fnox provider add keychain keychain --global` when `~/.config/fnox/config.toml` has no
-`keychain` provider. That file is real and untracked: fnox writes it, and rewrites it on
-every `fnox set --global`. None of this touches the Keychain.
+`keychain` provider, then makes it the default (`default_provider = "keychain"`, the one
+line it writes itself: fnox has no command for it). Without a default, `fnox set` with no
+`--provider` writes the value into the config in plain text. That file is real and
+untracked: fnox writes it, and rewrites it on every `fnox set --global`. None of this
+touches the Keychain.
 
 ## Customize
 
 - Add a secret: `fnox set NAME --provider keychain --global`. It prompts for the value
   (hidden), stores it in the Keychain under service `fnox`, account `NAME`, and records
   the name in `~/.config/fnox/config.toml`.
-- Run with secrets: `fnox exec -- <cmd> [args]` exports each secret to that command only.
-  fnox options go before `--`.
+- Run with secrets: `fnox exec --only NAME -- <cmd> [args]` exports that secret to that
+  command only; repeat `--only` for more. Without `--only`, the command gets every secret
+  in the config, and tools that find a provider API key in their environment use it (and
+  bill against it). fnox options go before `--`.
 - Keychain prompts: macOS may ask to allow fnox to read each item, one at a time.
   "Always Allow" covers the current binary; a new fnox version from mise can ask again.
 - Never store anything named `__fnox_test__`: `fnox provider test keychain` overwrites
@@ -48,5 +53,6 @@ every `fnox set --global`. None of this touches the Keychain.
 ## Verify
 
 `./verify.sh` checks that a global mise config declares fnox, that `mise which fnox`
-finds it, that the completion file exists, and that `fnox provider list` on the global
-config shows `keychain`. Listing reads only the config file.
+finds it, that the completion file exists, that `fnox provider list` on the global
+config shows `keychain`, and that `default_provider` is `keychain`. Both read only the
+config file.

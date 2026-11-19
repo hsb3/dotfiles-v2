@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh: declare fnox in mise's global config if it is not declared yet, install it, generate its zsh completion, and add a global keychain provider.
+# install.sh: declare fnox in mise's global config if it is not declared yet, install it, generate its zsh completion, and add a global keychain provider as the default.
 # requires: mise
 set -euo pipefail
 
@@ -28,4 +28,10 @@ new="$(MISE_OFFLINE=1 mise exec fnox -- fnox completion zsh)"
 cfg="$HOME/.config/fnox/config.toml"
 if ! { [ -f "$cfg" ] && MISE_OFFLINE=1 mise exec fnox -- fnox -c "$cfg" provider list | grep -x keychain >/dev/null; }; then
   FNOX_CONFIG_DIR="$HOME/.config/fnox" MISE_OFFLINE=1 mise exec fnox -- fnox provider add keychain keychain --global
+fi
+# Without a default provider, `fnox set` with no --provider writes the value into this
+# file in plain text. fnox has no command that sets it, so the line is added here.
+if ! grep -q '^default_provider *= *"keychain"' "$cfg"; then
+  rest="$(grep -v '^default_provider *=' "$cfg" || true)"
+  printf 'default_provider = "keychain"\n%s\n' "$rest" >"$cfg"
 fi
